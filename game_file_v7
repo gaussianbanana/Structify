@@ -1,0 +1,408 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Structify – Lab Edition</title>
+  <style>
+    :root {
+      --primary: #00796b;
+      --secondary: #004d40;
+      --background: #f3f6f9;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--background);
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+    h1 {
+      margin: 1rem 0 0.5rem;
+      color: #2e7d32;
+    }
+    .highlight-box {
+      background: #e0f2f1;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      text-align: left;
+    }
+    .game-container {
+        display: grid;
+        grid-template-columns: repeat(4, auto);
+        justify-content: center;
+        gap: 10px;
+        margin: 1rem auto;
+        max-width: 600px;
+    }
+
+    .amino-acid {
+      padding: 0.6rem 1.2rem;
+      border-radius: 8px;
+      color: white;
+      font-weight: bold;
+      cursor: grab;
+      user-select: none;
+      transition: transform 0.2s ease;
+    }
+    .amino-acid:hover {
+      transform: scale(1.05);
+    }
+    .hydrophobic { background: #6d4c41; }
+    .polar { background: #42a5f5; }
+    .acidic { background: #ef5350; }
+    .basic { background: #66bb6a; }
+    .disulfide { background: #ff9800; }
+    .drop-zone {
+      width: 90vw;
+      max-width: 540px;
+      height: 60vw;
+      max-height: 540px;
+      border: 2px dashed #ccc;
+      border-radius: 12px;
+      background: white;
+      margin: 1rem auto;
+      position: relative;
+    }
+    .dropped {
+      position: absolute;
+      outline: 2px dashed transparent;
+    }
+    .dropped.selected {
+      outline: 2px dashed #000;
+    }
+    .report-box {
+      text-align: left;
+      font-family: monospace;
+      background: #fdfdfd;
+      border-left: 4px solid var(--primary);
+      padding: 1rem;
+      margin-top: 1rem;
+      white-space: pre-wrap;
+    }
+    #toast {
+      visibility: hidden;
+      min-width: 200px;
+      background-color: #323232;
+      color: white;
+      text-align: center;
+      border-radius: 6px;
+      padding: 10px;
+      position: fixed;
+      z-index: 100;
+      left: 50%;
+      bottom: 30px;
+      transform: translateX(-50%);
+      font-size: 1rem;
+    }
+    #toast.show {
+      visibility: visible;
+      animation: fadein 0.5s, fadeout 0.5s 2.5s;
+    }
+    @keyframes fadein {
+      from {bottom: 10px; opacity: 0;}
+      to {bottom: 30px; opacity: 1;}
+    }
+    @keyframes fadeout {
+      from {bottom: 30px; opacity: 1;}
+      to {bottom: 10px; opacity: 0;}
+    }
+    .bar {
+      height: 10px;
+      margin: 10px auto;
+      max-width: 500px;
+      border-radius: 5px;
+      background: linear-gradient(to right, #ef5350, #ffeb3b, #66bb6a);
+      position: relative;
+    }
+    .bar::after {
+      content: '';
+      position: absolute;
+      height: 10px;
+      width: 5px;
+      background: #000;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    #copy-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 1rem;
+      flex-wrap: wrap;
+    }
+    #copy-buttons button {
+      padding: 0.5rem 1rem;
+      border: none;
+      background: var(--primary);
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s;
+    }
+    #copy-buttons button:hover {
+      background: var(--secondary);
+    }
+    .button-group {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 1rem;
+}
+
+.lab-button {
+  padding: 0.5rem 1rem;
+  border: none;
+  background: var(--primary);
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.3s;
+}
+
+.lab-button:hover {
+  background: var(--secondary);
+}
+
+  </style>
+</head>
+<body>
+    <h1>🧪 Structify</h1>
+  
+    <div id="demo">
+      <div class="highlight-box">
+        <strong>🧬 Tutorial:</strong>
+        <p>Drag and drop amino acids into the fold zone. Match acidic and basic residues to form <strong>salt bridges</strong>. Place two <strong>Cys</strong> residues close together to form <strong>disulfide bonds</strong>. Use <strong>WASD</strong> keys to nudge residues. Copy/share puzzle seed below.</p>
+        <p>Drag and drop 9 amino acids into the fold zone to build the best protein structure.
+        </p>
+        <ul style="text-align:left; font-size: 0.95rem">
+          <li><strong>Salt bridges</strong>: Place acidic + basic residues close together (but don’t block them with hydrophobic residues).</li>
+          <li><strong>Disulfide bonds</strong>: Place two <code>Cys</code> near each other.</li>
+          <li><strong>WASD</strong>: Use these keys to nudge residues on the board.</li>
+          <li><strong>Score</strong>: Lower ΔG = better fold. Press "Check My Fold" to see your lab report.</li>
+        </ul>
+        <button onclick="runDemo()">▶️ Watch a Perfect Structure</button>
+      </div>
+    </div>
+  
+    <div id="tutorial">
+      <p><strong>Goal:</strong> Optimize protein folding by arranging amino acids for best ΔG, salt bridges, and disulfide bonds!</p>
+      <div class="bar" id="score-bar"></div>
+    </div>
+  
+    <div class="game-container" id="aa-bank"></div>
+    <div class="drop-zone" id="dropZone"></div>
+    <div id="controls">
+        <div class="button-group">
+          <button class="lab-button" onclick="checkStructure()">Check My Fold</button>
+          <button class="lab-button" onclick="resetGame()">Reset</button>
+          <button class="lab-button" onclick="nextPuzzle()">Next Puzzle</button>
+          <button class="lab-button" onclick="generateTodaySeed()">Today's Seed</button>
+          <button class="lab-button" onclick="loadSeedPuzzle()">🌱 Load Seed</button>
+        </div>
+        <p><strong>🧬 Puzzle Seed:</strong> <span id="seed-display"></span></p>
+        <input type="text" id="seed-input" placeholder="Paste seed here" style="width: 250px;">
+      </div>      
+    <div id="copy-buttons">
+      <button onclick="copySeedToClipboard()">📋 Copy Seed</button>
+      <button onclick="copyReportToClipboard()">📑 Copy Lab Report</button>
+    </div>
+    <div id="score-report"></div>
+    <div id="toast">Nice Fold!</div>
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js"></script>
+    <script>
+      const aaBank = document.getElementById('aa-bank');
+      const dropZone = document.getElementById('dropZone');
+      const report = document.getElementById('score-report');
+      const toast = document.getElementById('toast');
+      const scoreBar = document.getElementById('score-bar');
+      const seedDisplay = document.getElementById('seed-display');
+      const seedInput = document.getElementById('seed-input');
+      const SNAP_SIZE = 10;
+      let selectedResidue = null;
+  
+      const aminoAcids = ["Ala", "Arg", "Asn", "Asp", "Cys", "Glu", "Gln", "Gly", "His", "Ile", "Leu", "Lys", "Met", "Phe", "Pro", "Ser", "Thr", "Trp", "Tyr", "Val"];
+      const types = {
+        Ala: "hydrophobic", Val: "hydrophobic", Leu: "hydrophobic", Ile: "hydrophobic", Met: "hydrophobic", Phe: "hydrophobic", Trp: "hydrophobic", Pro: "hydrophobic",
+        Ser: "polar", Thr: "polar", Asn: "polar", Gln: "polar", Gly: "polar", Tyr: "polar", Cys: "disulfide",
+        Glu: "acidic", Asp: "acidic",
+        Lys: "basic", Arg: "basic", His: "basic"
+      };
+  
+      document.addEventListener('keydown', e => {
+        if (!selectedResidue) return;
+        let left = parseInt(selectedResidue.style.left || '0');
+        let top = parseInt(selectedResidue.style.top || '0');
+        if (e.key === 'w') top -= SNAP_SIZE;
+        if (e.key === 'a') left -= SNAP_SIZE;
+        if (e.key === 's') top += SNAP_SIZE;
+        if (e.key === 'd') left += SNAP_SIZE;
+        selectedResidue.style.left = `${Math.round(left / SNAP_SIZE) * SNAP_SIZE}px`;
+        selectedResidue.style.top = `${Math.round(top / SNAP_SIZE) * SNAP_SIZE}px`;
+        saveGameState();
+      });
+  
+      function createAA(name, i) {
+        const el = document.createElement('div');
+        el.className = `amino-acid ${types[name]}`;
+        el.textContent = name;
+        el.id = `aa-${i}`;
+        el.dataset.name = name;
+        el.dataset.type = types[name];
+        el.draggable = true;
+        el.addEventListener('click', () => {
+          document.querySelectorAll('.selected').forEach(e => e.classList.remove('selected'));
+          el.classList.add('selected');
+          selectedResidue = el;
+        });
+        el.addEventListener('dragstart', e => e.dataTransfer.setData('text/plain', el.id));
+        return el;
+      }
+  
+      function generateResidues(seed) {
+        seedDisplay.textContent = seed;
+        const rng = new Math.seedrandom(seed);
+        const shuffled = aminoAcids.slice().sort(() => rng() - 0.5);
+        const set = [];
+        // Guarantee one acidic and one basic
+        const acidicResidues = ["Asp", "Glu"];
+        const basicResidues = ["Arg", "Lys", "His"];
+        set.push(acidicResidues[Math.floor(rng() * acidicResidues.length)]);
+        set.push(basicResidues[Math.floor(rng() * basicResidues.length)]);
+        // Fill the rest with random AAs (including possible repeats)
+        while (set.length < 12) {
+            const pick = aminoAcids[Math.floor(rng() * aminoAcids.length)];
+            set.push(pick);
+        }
+
+        aaBank.innerHTML = '';
+        set.forEach((name, i) => aaBank.appendChild(createAA(name, i)));
+      }
+  
+      function resetGame() {
+        localStorage.removeItem('foldGameState');
+        [...document.querySelectorAll('.dropped')].forEach(el => {
+          el.style = '';
+          el.classList.remove('dropped', 'selected');
+          el.setAttribute('draggable', true);
+          aaBank.appendChild(el);
+        });
+        report.innerHTML = '';
+        scoreBar.style.background = '';
+      }
+  
+      function checkStructure() {
+        const dropped = [...document.querySelectorAll('.drop-zone .dropped')];
+        const acids = dropped.filter(el => el.dataset.type === 'acidic');
+        const bases = dropped.filter(el => el.dataset.type === 'basic');
+        const hydros = dropped.filter(el => el.dataset.type === 'hydrophobic');
+        const polars = dropped.filter(el => el.dataset.type === 'polar');
+        const cysteines = dropped.filter(el => el.dataset.name === 'Cys');
+  
+        let saltBridges = 0;
+        acids.forEach(a => {
+          bases.forEach(b => {
+            const dist = Math.hypot(a.offsetLeft - b.offsetLeft, a.offsetTop - b.offsetTop);
+            const hydrophobicBlock = hydros.some(h => Math.hypot((h.offsetLeft - (a.offsetLeft + b.offsetLeft) / 2), (h.offsetTop - (a.offsetTop + b.offsetTop) / 2)) < 80);
+            if (dist < 150 && !hydrophobicBlock) saltBridges++;
+          });
+        });
+  
+        let disulfideBonds = 0;
+        for (let i = 0; i < cysteines.length; i++) {
+          for (let j = i + 1; j < cysteines.length; j++) {
+            const dist = Math.hypot(cysteines[i].offsetLeft - cysteines[j].offsetLeft, cysteines[i].offsetTop - cysteines[j].offsetTop);
+            if (dist < 120) disulfideBonds++;
+          }
+        }
+  
+        const deltaG = -2 * hydros.length + polars.length - 3 * saltBridges - 4 * disulfideBonds;
+        const rating = deltaG < -12 ? '🌟🌟🌟' : deltaG < -6 ? '🌟🌟' : deltaG < 0 ? '🌟' : '🧪';
+        const percent = Math.min(100, Math.max(0, 50 + deltaG * -5));
+        scoreBar.style.background = `linear-gradient(to right, #ef5350 ${percent}%, #eee ${percent}%)`;
+  
+        report.innerHTML = `<div class="report-box">
+    🔬 <strong>Lab Report</strong>
+    -----------------------------
+    🧬 Residues placed: ${dropped.map(d => d.dataset.name).join(', ')}
+    🧲 Salt bridges: ${saltBridges}
+    🔗 Disulfide bonds: ${disulfideBonds}
+    🌊 Hydrophobic residues: ${hydros.length}
+    💧 Polar residues: ${polars.length}
+    ⚡ ΔG (folding energy): ${deltaG.toFixed(2)} kcal/mol
+    🏅 Fold Rating: ${rating}
+    🪴 Seed: ${seedDisplay.textContent}
+    </div>`;
+  
+        showToast(deltaG < -6 ? "✨ Nice Fold!" : "🤏 Could be tighter...");
+      }
+  
+      function nextPuzzle() {
+        const newSeed = Date.now().toString();
+        resetGame();
+        generateResidues(newSeed);
+      }
+  
+      function runDemo() {
+        const demoResidues = [
+          { name: 'Glu', x: 60, y: 60 },
+          { name: 'Lys', x: 120, y: 60 },
+          { name: 'Cys', x: 180, y: 60 },
+          { name: 'Cys', x: 240, y: 60 },
+          { name: 'Ala', x: 300, y: 120 },
+          { name: 'Val', x: 180, y: 180 },
+          { name: 'Leu', x: 120, y: 240 },
+          { name: 'Ser', x: 60, y: 180 },
+          { name: 'Thr', x: 120, y: 120 },
+        ];
+        aaBank.innerHTML = '';
+        dropZone.innerHTML = '';
+        demoResidues.forEach((res, i) => {
+          const el = document.createElement('div');
+          el.className = `amino-acid ${types[res.name]}`;
+          el.textContent = res.name;
+          el.dataset.name = res.name;
+          el.dataset.type = types[res.name];
+          el.style.position = 'absolute';
+          el.style.left = res.x + 'px';
+          el.style.top = res.y + 'px';
+          el.classList.add('dropped');
+          dropZone.appendChild(el);
+        });
+        setTimeout(() => checkStructure(), 800);
+      }
+  
+      function showToast(msg) {
+        toast.textContent = msg;
+        toast.className = "show";
+        setTimeout(() => toast.className = toast.className.replace("show", ""), 3000);
+      }
+  
+      dropZone.addEventListener('dragover', e => e.preventDefault());
+      dropZone.addEventListener('drop', e => {
+        e.preventDefault();
+        const id = e.dataTransfer.getData('text/plain');
+        const el = document.getElementById(id);
+        el.classList.add('dropped');
+        el.style.position = 'absolute';
+        el.style.left = `${e.offsetX - 30}px`;
+        el.style.top = `${e.offsetY - 30}px`;
+        dropZone.appendChild(el);
+        saveGameState();
+      });
+  
+      window.onload = () => {
+        generateResidues("daily-" + new Date().toISOString().split('T')[0]);
+      }
+    </script>
+  </body>
+  
+  
+</html>
