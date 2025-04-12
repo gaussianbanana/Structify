@@ -2,7 +2,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Fold Me If You Can – Lab Edition</title>
+  <title>Structify – Lab Edition</title>
   <style>
     :root {
       --primary: #00796b;
@@ -31,13 +31,14 @@
       text-align: left;
     }
     .game-container {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin: 1rem auto;
-      max-width: 600px;
+        display: grid;
+        grid-template-columns: repeat(4, auto);
+        justify-content: center;
+        gap: 10px;
+        margin: 1rem auto;
+        max-width: 600px;
     }
+
     .amino-acid {
       padding: 0.6rem 1.2rem;
       border-radius: 8px;
@@ -146,50 +147,107 @@
     #copy-buttons button:hover {
       background: var(--secondary);
     }
+    .button-group {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 1rem;
+}
+
+.lab-button {
+  padding: 0.5rem 1rem;
+  border: none;
+  background: var(--primary);
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.3s;
+}
+
+.lab-button:hover {
+  background: var(--secondary);
+}
+
   </style>
 </head>
 <body>
-    <h1>🧪 Fold Me If You Can</h1>
+    <h1>🧪 Structify</h1>
   
     <div id="demo">
       <div class="highlight-box">
         <strong>🧬 Tutorial:</strong>
-        <p>Drag and drop amino acids into the fold zone. Match acidic and basic residues to form <strong>salt bridges</strong>. Place two <strong>Cys</strong> residues close together to form <strong>disulfide bonds</strong>. Bury hydrophobics deep in the core and keep polars near the edges!</p>
-        <button onclick="runDemo()">▶️ Watch a Perfect Fold</button>
+        <p>Drag and drop amino acids into the fold zone. Match acidic and basic residues to form <strong>salt bridges</strong>. Place two <strong>Cys</strong> residues close together to form <strong>disulfide bonds</strong>. Use <strong>WASD</strong> keys to nudge residues. Copy/share puzzle seed below.</p>
+        <p>Drag and drop 9 amino acids into the fold zone to build the best protein structure.
+        </p>
+        <ul style="text-align:left; font-size: 0.95rem">
+          <li><strong>Salt bridges</strong>: Place acidic + basic residues close together (but don’t block them with hydrophobic residues).</li>
+          <li><strong>Disulfide bonds</strong>: Place two <code>Cys</code> near each other.</li>
+          <li><strong>WASD</strong>: Use these keys to nudge residues on the board.</li>
+          <li><strong>Score</strong>: Lower ΔG = better fold. Press "Check My Fold" to see your lab report.</li>
+        </ul>
+        <button onclick="runDemo()">▶️ Watch a Perfect Structure</button>
       </div>
     </div>
   
     <div id="tutorial">
       <p><strong>Goal:</strong> Optimize protein folding by arranging amino acids for best ΔG, salt bridges, and disulfide bonds!</p>
-      <p id="daily-seed"></p>
       <div class="bar" id="score-bar"></div>
     </div>
   
     <div class="game-container" id="aa-bank"></div>
     <div class="drop-zone" id="dropZone"></div>
     <div id="controls">
-      <button onclick="checkStructure()">Check My Fold</button>
-      <button onclick="resetGame()">Reset</button>
-      <button onclick="nextPuzzle()">Next Puzzle</button>
+        <div class="button-group">
+          <button class="lab-button" onclick="checkStructure()">Check My Fold</button>
+          <button class="lab-button" onclick="resetGame()">Reset</button>
+          <button class="lab-button" onclick="nextPuzzle()">Next Puzzle</button>
+          <button class="lab-button" onclick="generateTodaySeed()">Today's Seed</button>
+          <button class="lab-button" onclick="loadSeedPuzzle()">🌱 Load Seed</button>
+        </div>
+        <p><strong>🧬 Puzzle Seed:</strong> <span id="seed-display"></span></p>
+        <input type="text" id="seed-input" placeholder="Paste seed here" style="width: 250px;">
+      </div>      
+    <div id="copy-buttons">
+      <button onclick="copySeedToClipboard()">📋 Copy Seed</button>
+      <button onclick="copyReportToClipboard()">📑 Copy Lab Report</button>
     </div>
     <div id="score-report"></div>
     <div id="toast">Nice Fold!</div>
   
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js"></script>
     <script>
       const aaBank = document.getElementById('aa-bank');
       const dropZone = document.getElementById('dropZone');
       const report = document.getElementById('score-report');
       const toast = document.getElementById('toast');
       const scoreBar = document.getElementById('score-bar');
+      const seedDisplay = document.getElementById('seed-display');
+      const seedInput = document.getElementById('seed-input');
+      const SNAP_SIZE = 10;
+      let selectedResidue = null;
   
-      const aminoAcids = ["Ala", "Ser", "Glu", "Lys", "Val", "Thr", "Asp", "Arg", "Leu", "Asn", "Cys", "Pro", "Gly", "Trp"];
+      const aminoAcids = ["Ala", "Arg", "Asn", "Asp", "Cys", "Glu", "Gln", "Gly", "His", "Ile", "Leu", "Lys", "Met", "Phe", "Pro", "Ser", "Thr", "Trp", "Tyr", "Val"];
       const types = {
-        Ala: "hydrophobic", Val: "hydrophobic", Leu: "hydrophobic", Pro: "hydrophobic", Trp: "hydrophobic",
-        Ser: "polar", Thr: "polar", Asn: "polar", Gly: "polar",
+        Ala: "hydrophobic", Val: "hydrophobic", Leu: "hydrophobic", Ile: "hydrophobic", Met: "hydrophobic", Phe: "hydrophobic", Trp: "hydrophobic", Pro: "hydrophobic",
+        Ser: "polar", Thr: "polar", Asn: "polar", Gln: "polar", Gly: "polar", Tyr: "polar", Cys: "disulfide",
         Glu: "acidic", Asp: "acidic",
-        Lys: "basic", Arg: "basic",
-        Cys: "disulfide"
+        Lys: "basic", Arg: "basic", His: "basic"
       };
+  
+      document.addEventListener('keydown', e => {
+        if (!selectedResidue) return;
+        let left = parseInt(selectedResidue.style.left || '0');
+        let top = parseInt(selectedResidue.style.top || '0');
+        if (e.key === 'w') top -= SNAP_SIZE;
+        if (e.key === 'a') left -= SNAP_SIZE;
+        if (e.key === 's') top += SNAP_SIZE;
+        if (e.key === 'd') left += SNAP_SIZE;
+        selectedResidue.style.left = `${Math.round(left / SNAP_SIZE) * SNAP_SIZE}px`;
+        selectedResidue.style.top = `${Math.round(top / SNAP_SIZE) * SNAP_SIZE}px`;
+        saveGameState();
+      });
   
       function createAA(name, i) {
         const el = document.createElement('div');
@@ -199,26 +257,45 @@
         el.dataset.name = name;
         el.dataset.type = types[name];
         el.draggable = true;
+        el.addEventListener('click', () => {
+          document.querySelectorAll('.selected').forEach(e => e.classList.remove('selected'));
+          el.classList.add('selected');
+          selectedResidue = el;
+        });
         el.addEventListener('dragstart', e => e.dataTransfer.setData('text/plain', el.id));
         return el;
       }
   
       function generateResidues(seed) {
-        document.getElementById('daily-seed').textContent = `Puzzle ID: ${seed}`;
-        aaBank.innerHTML = '';
-        const shuffled = aminoAcids.slice().sort(() => 0.5 - Math.random());
-        const set = ["Glu", "Lys"];
-        while (set.length < 9) {
-          const pick = shuffled[Math.floor(Math.random() * shuffled.length)];
-          if (!set.includes(pick)) set.push(pick);
+        seedDisplay.textContent = seed;
+        const rng = new Math.seedrandom(seed);
+        const shuffled = aminoAcids.slice().sort(() => rng() - 0.5);
+        const set = [];
+        // Guarantee one acidic and one basic
+        const acidicResidues = ["Asp", "Glu"];
+        const basicResidues = ["Arg", "Lys", "His"];
+        set.push(acidicResidues[Math.floor(rng() * acidicResidues.length)]);
+        set.push(basicResidues[Math.floor(rng() * basicResidues.length)]);
+        // Fill the rest with random AAs (including possible repeats)
+        while (set.length < 12) {
+            const pick = aminoAcids[Math.floor(rng() * aminoAcids.length)];
+            set.push(pick);
         }
+
+        aaBank.innerHTML = '';
         set.forEach((name, i) => aaBank.appendChild(createAA(name, i)));
       }
   
-      function showToast(msg) {
-        toast.textContent = msg;
-        toast.className = "show";
-        setTimeout(() => toast.className = toast.className.replace("show", ""), 3000);
+      function resetGame() {
+        localStorage.removeItem('foldGameState');
+        [...document.querySelectorAll('.dropped')].forEach(el => {
+          el.style = '';
+          el.classList.remove('dropped', 'selected');
+          el.setAttribute('draggable', true);
+          aaBank.appendChild(el);
+        });
+        report.innerHTML = '';
+        scoreBar.style.background = '';
       }
   
       function checkStructure() {
@@ -247,55 +324,31 @@
         }
   
         const deltaG = -2 * hydros.length + polars.length - 3 * saltBridges - 4 * disulfideBonds;
-        const rating = deltaG < -12 ? '⭐⭐⭐' : deltaG < -6 ? '⭐⭐' : deltaG < 0 ? '⭐' : '🧪';
+        const rating = deltaG < -12 ? '🌟🌟🌟' : deltaG < -6 ? '🌟🌟' : deltaG < 0 ? '🌟' : '🧪';
         const percent = Math.min(100, Math.max(0, 50 + deltaG * -5));
         scoreBar.style.background = `linear-gradient(to right, #ef5350 ${percent}%, #eee ${percent}%)`;
   
         report.innerHTML = `<div class="report-box">
     🔬 <strong>Lab Report</strong>
     -----------------------------
-    Residues placed: ${dropped.map(d => d.dataset.name).join(', ')}
-    Salt bridges: ${saltBridges}
-    Disulfide bonds: ${disulfideBonds}
-    Hydrophobic residues: ${hydros.length}
-    Polar residues: ${polars.length}
-    ΔG (folding energy): ${deltaG.toFixed(2)} kcal/mol
-    Fold Rating: ${rating}
-  </div>`;
+    🧬 Residues placed: ${dropped.map(d => d.dataset.name).join(', ')}
+    🧲 Salt bridges: ${saltBridges}
+    🔗 Disulfide bonds: ${disulfideBonds}
+    🌊 Hydrophobic residues: ${hydros.length}
+    💧 Polar residues: ${polars.length}
+    ⚡ ΔG (folding energy): ${deltaG.toFixed(2)} kcal/mol
+    🏅 Fold Rating: ${rating}
+    🪴 Seed: ${seedDisplay.textContent}
+    </div>`;
   
-        showToast(deltaG < -6 ? "Nice Fold!" : "Could be tighter...");
-      }
-  
-      function resetGame() {
-        [...document.querySelectorAll('.dropped')].forEach(el => {
-          el.style = '';
-          el.classList.remove('dropped');
-          el.setAttribute('draggable', true);
-          aaBank.appendChild(el);
-        });
-        report.innerHTML = '';
-        scoreBar.style.background = '';
+        showToast(deltaG < -6 ? "✨ Nice Fold!" : "🤏 Could be tighter...");
       }
   
       function nextPuzzle() {
-        const newSeed = new Date().getTime().toString();
+        const newSeed = Date.now().toString();
         resetGame();
         generateResidues(newSeed);
       }
-  
-      dropZone.addEventListener('dragover', e => e.preventDefault());
-      dropZone.addEventListener('drop', e => {
-        e.preventDefault();
-        const id = e.dataTransfer.getData('text/plain');
-        const el = document.getElementById(id);
-        el.classList.add('dropped');
-        el.style.position = 'absolute';
-        el.style.left = `${e.offsetX - 30}px`;
-        el.style.top = `${e.offsetY - 30}px`;
-        dropZone.appendChild(el);
-      });
-  
-      window.onload = () => generateResidues("daily-" + new Date().toISOString().split('T')[0]);
   
       function runDemo() {
         const demoResidues = [
@@ -309,7 +362,6 @@
           { name: 'Ser', x: 60, y: 180 },
           { name: 'Thr', x: 120, y: 120 },
         ];
-  
         aaBank.innerHTML = '';
         dropZone.innerHTML = '';
         demoResidues.forEach((res, i) => {
@@ -326,7 +378,31 @@
         });
         setTimeout(() => checkStructure(), 800);
       }
+  
+      function showToast(msg) {
+        toast.textContent = msg;
+        toast.className = "show";
+        setTimeout(() => toast.className = toast.className.replace("show", ""), 3000);
+      }
+  
+      dropZone.addEventListener('dragover', e => e.preventDefault());
+      dropZone.addEventListener('drop', e => {
+        e.preventDefault();
+        const id = e.dataTransfer.getData('text/plain');
+        const el = document.getElementById(id);
+        el.classList.add('dropped');
+        el.style.position = 'absolute';
+        el.style.left = `${e.offsetX - 30}px`;
+        el.style.top = `${e.offsetY - 30}px`;
+        dropZone.appendChild(el);
+        saveGameState();
+      });
+  
+      window.onload = () => {
+        generateResidues("daily-" + new Date().toISOString().split('T')[0]);
+      }
     </script>
   </body>
+  
   
 </html>
