@@ -171,195 +171,6 @@
 }
 
   </style>
-
-  <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-
-  :root {
-    --primary: #00796b;
-    --secondary: #004d40;
-    --background: #f9f9f9;
-  }
-
-  * {
-    box-sizing: border-box;
-  }
-
-  body {
-    font-family: 'Inter', sans-serif;
-    background: var(--background);
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    -webkit-font-smoothing: antialiased;
-  }
-
-  h1 {
-    margin: 1rem 0 0.5rem;
-    color: #2e7d32;
-    font-weight: 700;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  }
-
-  .highlight-box {
-    background: #e0f2f1;
-    padding: 1rem;
-    border-radius: 12px;
-    margin: 1.5rem auto;
-    text-align: left;
-    max-width: 600px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-  }
-
-  .game-container {
-    display: grid;
-    grid-template-columns: repeat(4, auto);
-    justify-content: center;
-    gap: 12px;
-    margin: 1.5rem auto;
-    max-width: 600px;
-  }
-
-  .amino-acid {
-    padding: 0.6rem 1rem;
-    border-radius: 999px;
-    color: white;
-    font-weight: 600;
-    font-size: 0.95rem;
-    cursor: grab;
-    user-select: none;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-  }
-
-  .amino-acid:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-  }
-
-  .hydrophobic { background: #6d4c41; }
-  .polar { background: #42a5f5; }
-  .acidic { background: #ef5350; }
-  .basic { background: #66bb6a; }
-  .disulfide { background: #ff9800; }
-
-  .drop-zone {
-    width: 90vw;
-    max-width: 540px;
-    height: 60vw;
-    max-height: 540px;
-    border: 2px dashed #ccc;
-    border-radius: 16px;
-    background: white;
-    margin: 2rem auto;
-    position: relative;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.05);
-  }
-
-  .dropped {
-    position: absolute;
-    outline: 2px dashed transparent;
-  }
-
-  .dropped.selected {
-    outline: 2px dashed #000;
-  }
-
-  .report-box {
-    text-align: left;
-    font-family: monospace;
-    background: #fdfdfd;
-    border-left: 4px solid var(--primary);
-    padding: 1rem;
-    margin-top: 2rem;
-    white-space: pre-wrap;
-    max-width: 600px;
-    margin-left: auto;
-    margin-right: auto;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.04);
-  }
-
-  #toast {
-    visibility: hidden;
-    min-width: 200px;
-    background-color: rgba(0, 0, 0, 0.85);
-    color: white;
-    text-align: center;
-    border-radius: 8px;
-    padding: 10px;
-    position: fixed;
-    z-index: 100;
-    left: 50%;
-    bottom: 30px;
-    transform: translateX(-50%);
-    font-size: 1rem;
-    font-weight: 500;
-  }
-
-  #toast.show {
-    visibility: visible;
-    animation: fadein 0.5s, fadeout 0.5s 2.5s;
-  }
-
-  @keyframes fadein {
-    from {bottom: 10px; opacity: 0;}
-    to {bottom: 30px; opacity: 1;}
-  }
-
-  @keyframes fadeout {
-    from {bottom: 30px; opacity: 1;}
-    to {bottom: 10px; opacity: 0;}
-  }
-
-  .bar {
-    height: 10px;
-    margin: 10px auto;
-    max-width: 500px;
-    border-radius: 5px;
-    background: linear-gradient(to right, #ef5350, #ffeb3b, #66bb6a);
-    position: relative;
-  }
-
-  .bar::after {
-    content: '';
-    position: absolute;
-    height: 10px;
-    width: 5px;
-    background: #000;
-    left: 50%;
-    transform: translateX(-50%);
-  }
-
-  #copy-buttons,
-  .button-group {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin: 1rem;
-    flex-wrap: wrap;
-  }
-
-  #copy-buttons button,
-  .lab-button {
-    padding: 0.6rem 1.4rem;
-    border: 2px solid var(--primary);
-    background: white;
-    color: var(--primary);
-    font-size: 1rem;
-    font-weight: 600;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.2s ease-in-out;
-  }
-
-  #copy-buttons button:hover,
-  .lab-button:hover {
-    background: var(--primary);
-    color: white;
-  }
-</style>
-
 </head>
 <body>
     <h1>🧪 Structify</h1>
@@ -367,17 +178,8 @@
     <div id="demo">
       <div class="highlight-box">
         <strong>🧬 Tutorial:</strong>
-        <p>Drag and drop amino acids into the fold zone to build a protein structure. Use <strong>WASD</strong> keys to nudge residues. Match acidic and basic residues to form <strong>salt bridges</strong>, and place two <strong>Cys</strong> residues close together to form <strong>disulfide bonds</strong>.</p>
-<p><strong>Block Colors:</strong></p>
-<ul style="text-align:left; font-size: 0.95rem">
-  <li><span style="color: #ef5350; font-weight: bold;">Red</span>: Acidic (Asp, Glu)</li>
-  <li><span style="color: #66bb6a; font-weight: bold;">Green</span>: Basic (Arg, Lys, His)</li>
-  <li><span style="color: #42a5f5; font-weight: bold;">Blue</span>: Polar (Ser, Thr, Asn, Gln, Gly, Tyr)</li>
-  <li><span style="color: #6d4c41; font-weight: bold;">Brown</span>: Hydrophobic (Ala, Val, Leu, Ile, Met, Phe, Trp, Pro)</li>
-  <li><span style="color: #ff9800; font-weight: bold;">Orange</span>: Disulfide-forming (Cys)</li>
-</ul>
-
-        <p>Drag and drop 12 amino acids into the fold zone to build the best protein structure.
+        <p>Drag and drop amino acids into the fold zone. Match acidic and basic residues to form <strong>salt bridges</strong>. Place two <strong>Cys</strong> residues close together to form <strong>disulfide bonds</strong>. Use <strong>WASD</strong> keys to nudge residues. Copy/share puzzle seed below.</p>
+        <p>Drag and drop 9 amino acids into the fold zone to build the best protein structure.
         </p>
         <ul style="text-align:left; font-size: 0.95rem">
           <li><strong>Salt bridges</strong>: Place acidic + basic residues close together (but don’t block them with hydrophobic residues).</li>
@@ -402,10 +204,11 @@
           <button class="lab-button" onclick="resetGame()">Reset</button>
           <button class="lab-button" onclick="nextPuzzle()">Next Puzzle</button>
           <button class="lab-button" onclick="generateTodaySeed()">Today's Seed</button>
-          <button class="lab-button" onclick="loadSeedPuzzle()">🌱 Load Seed</button>
+          <input type="text" id="seed-input" placeholder="Paste seed here" style="width: 250px;">
+<button class="lab-button" onclick="loadSeedPuzzle()">🌱 Load Seed</button>
+
         </div>
         <p><strong>🧬 Puzzle Seed:</strong> <span id="seed-display"></span></p>
-        <input type="text" id="seed-input" placeholder="Paste seed here" style="width: 250px;">
       </div>      
     <div id="copy-buttons">
       <button onclick="copySeedToClipboard()">📋 Copy Seed</button>
@@ -462,6 +265,24 @@
         });
         el.addEventListener('dragstart', e => e.dataTransfer.setData('text/plain', el.id));
         return el;
+      }
+
+      function copyReportToClipboard() {
+        const text = document.getElementById('score-report').innerText;
+        navigator.clipboard.writeText(text).then(() => {
+          showToast("📑 Report copied!");
+        });
+      }
+      
+      function copySeedToClipboard() {
+        const seed = seedDisplay.textContent.trim();
+        if (seed) {
+          navigator.clipboard.writeText(seed)
+          .then(() => showToast("📋 Seed copied!"))
+          .catch(() => showToast("❗ Copy failed"));
+        } else {
+          showToast("❗ No seed to copy");
+        }
       }
   
       function generateResidues(seed) {
@@ -535,7 +356,7 @@
     🌊 Hydrophobic residues: ${hydros.length}
     💧 Polar residues: ${polars.length}
     ⚡ ΔG (folding energy): ${deltaG.toFixed(2)} kcal/mol
-    🏅 Fold Rating: ${rating}
+    🏅 Structure Rating: ${rating}
     🪴 Seed: ${seedDisplay.textContent}
     </div>`;
   
@@ -599,6 +420,17 @@
       window.onload = () => {
         generateResidues("daily-" + new Date().toISOString().split('T')[0]);
       }
+
+      function loadSeedPuzzle() {
+  const input = document.getElementById('seed-input').value.trim();
+  if (input) {
+    resetGame();
+    generateResidues(input);
+  } else {
+    showToast("❗ Paste a valid seed first");
+  }
+}
+
     </script>
   </body>
   
