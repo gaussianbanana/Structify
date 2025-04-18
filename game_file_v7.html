@@ -290,7 +290,7 @@
         const rng = new Math.seedrandom(seed);
         const shuffled = aminoAcids.slice().sort(() => rng() - 0.5);
         const set = [];
-        // Guarantee one acidic and one basic
+        // Guarantee one acidic and one basic and maybe having at least with cystiene residues?
         const acidicResidues = ["Asp", "Glu"];
         const basicResidues = ["Arg", "Lys", "His"];
         set.push(acidicResidues[Math.floor(rng() * acidicResidues.length)]);
@@ -346,6 +346,8 @@
         const rating = deltaG < -12 ? '🌟🌟🌟' : deltaG < -6 ? '🌟🌟' : deltaG < 0 ? '🌟' : '🧪';
         const percent = Math.min(100, Math.max(0, 50 + deltaG * -5));
         scoreBar.style.background = `linear-gradient(to right, #ef5350 ${percent}%, #eee ${percent}%)`;
+        const coreResult = evaluateHydrophobicCore(dropped);
+
   
         report.innerHTML = `<div class="report-box">
     🔬 <strong>Lab Report</strong>
@@ -357,6 +359,13 @@
     💧 Polar residues: ${polars.length}
     ⚡ ΔG (folding energy): ${deltaG.toFixed(2)} kcal/mol
     🏅 Structure Rating: ${rating}
+
+    🧩 <strong>Hydrophobic Core Packing</strong>
+    ----------------------------------------
+    📍 Avg dist (Hydrophobic): ${coreResult.hydroAvg?.toFixed(1) ?? '—'} px  
+    💧 Avg dist (Polar): ${coreResult.polarAvg?.toFixed(1) ?? '—'} px  
+    📈 Core Score: ${coreResult.coreScore.toFixed(1)}  
+    🏅 Core Rating: ${coreResult.stars}
     🪴 Seed: ${seedDisplay.textContent}
     </div>`;
   
@@ -369,6 +378,45 @@
         generateResidues(newSeed);
       }
   
+      function evaluateHydrophobicCore(dropped) {
+  let hydros = dropped.filter(el => el.dataset.type === 'hydrophobic');
+  let polars = dropped.filter(el => el.dataset.type === 'polar');
+
+  if (hydros.length === 0 || polars.length === 0) {
+    return {
+      coreScore: 0,
+      hydroAvg: null,
+      polarAvg: null,
+      stars: '🧪',
+      message: '🧐 Not enough data to evaluate core packing.'
+    };
+  }
+
+  const center = dropped.reduce((acc, el) => {
+    acc.x += el.offsetLeft;
+    acc.y += el.offsetTop;
+    return acc;
+  }, {x: 0, y: 0});
+  center.x /= dropped.length;
+  center.y /= dropped.length;
+
+  const hydroAvgDist = hydros.reduce((sum, h) => sum + Math.hypot(h.offsetLeft - center.x, h.offsetTop - center.y), 0) / hydros.length;
+  const polarAvgDist = polars.reduce((sum, p) => sum + Math.hypot(p.offsetLeft - center.x, p.offsetTop - center.y), 0) / polars.length;
+
+  const score = Math.max(0, polarAvgDist - hydroAvgDist);
+  const stars = score > 40 ? '🌟🌟🌟' : score > 20 ? '🌟🌟' : score > 5 ? '🌟' : '🧪';
+
+  return {
+    coreScore: score,
+    hydroAvg: hydroAvgDist,
+    polarAvg: polarAvgDist,
+    stars,
+    message: `🧩 Core Packing Score: ${score.toFixed(1)}\nHydrophobic avg dist: ${hydroAvgDist.toFixed(1)}px\nPolar avg dist: ${polarAvgDist.toFixed(1)}px\n🏅 Core Rating: ${stars}`
+  };
+}
+
+
+
       function runDemo() {
         const demoResidues = [
           { name: 'Glu', x: 60, y: 60 },
