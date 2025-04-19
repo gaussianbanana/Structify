@@ -32,11 +32,12 @@
     }
     .game-container {
         display: grid;
-        grid-template-columns: repeat(4, auto);
+        grid-template-columns: repeat(6, auto);
+        grid-template-rows: repeat(3, auto);
         justify-content: center;
         gap: 10px;
         margin: 1rem auto;
-        max-width: 600px;
+        max-width: 750px;
     }
 
     .amino-acid {
@@ -295,11 +296,14 @@
         const basicResidues = ["Arg", "Lys", "His"];
         set.push(acidicResidues[Math.floor(rng() * acidicResidues.length)]);
         set.push(basicResidues[Math.floor(rng() * basicResidues.length)]);
+        set.push("Cys");
+        set.push("Cys");
         // Fill the rest with random AAs (including possible repeats)
-        while (set.length < 12) {
+        while (set.length < 18) {
             const pick = aminoAcids[Math.floor(rng() * aminoAcids.length)];
             set.push(pick);
         }
+        set.sort(() => rng() -0.5);
 
         aaBank.innerHTML = '';
         set.forEach((name, i) => aaBank.appendChild(createAA(name, i)));
