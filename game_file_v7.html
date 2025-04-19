@@ -459,8 +459,10 @@
         const el = document.getElementById(id);
         el.classList.add('dropped');
         el.style.position = 'absolute';
-        el.style.left = `${e.offsetX - 30}px`;
-        el.style.top = `${e.offsetY - 30}px`;
+        const rect = dropZone.getBoundingClientRect();
+el.style.left = `${e.clientX - rect.left - 30}px`;
+el.style.top = `${e.clientY - rect.top - 30}px`;
+
         dropZone.appendChild(el);
         saveGameState();
       });
