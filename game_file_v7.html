@@ -176,7 +176,7 @@
 <body>
     <h1>🧪 Structify</h1>
   
-    div id="demo">
+    <div id="demo">
       <div class="highlight-box">
         <strong>🧬 Tutorial:</strong>
         <p> Your aim is to build a small peptide structure by placing all 18 amino acids into the fold zone (grey box) with the following considerations to build the best possible protein structure: </p>
@@ -324,6 +324,11 @@
   
       function checkStructure() {
         const dropped = [...document.querySelectorAll('.drop-zone .dropped')];
+        const rect = dropZone.getBoundingClientRect();
+        const CORE_RADIUS = Math.min(rect.width, rect.height) * 0.4;
+        const CENTER = {
+            x: rect.width  / 2,
+            y: rect.height / 2};
         const acids = dropped.filter(el => el.dataset.type === 'acidic');
         const bases = dropped.filter(el => el.dataset.type === 'basic');
         const hydros = dropped.filter(el => el.dataset.type === 'hydrophobic');
@@ -346,8 +351,39 @@
             if (dist < 120) disulfideBonds++;
           }
         }
+
+        let shellBonus = 0;
+  function elemCenter(el) {
+    return {
+      x: el.offsetLeft + el.offsetWidth/2,
+      y: el.offsetTop  + el.offsetHeight/2
+    };
+  }
+
+  hydros.forEach(h => {
+    const c = elemCenter(h);
+    if (Math.hypot(c.x - CENTER.x, c.y - CENTER.y) < CORE_RADIUS) {
+      shellBonus += 1;   // good: hydrophobic in core
+    } else {
+      shellBonus -= 1;   // bad: hydrophobic in shell
+    }
+  });
+
+  polars.forEach(p => {
+    const c = elemCenter(p);
+    if (Math.hypot(c.x - CENTER.x, c.y - CENTER.y) > CORE_RADIUS) {
+      shellBonus += 1;   // good: polar in shell
+    } else {
+      shellBonus -= 1;   // bad: polar in core
+    }
+  });
   
-        const deltaG = -2 * hydros.length + polars.length - 3 * saltBridges - 4 * disulfideBonds;
+  const deltaG = -2 * hydros.length
+             + polars.length
+             - 3 * saltBridges
+             - 4 * disulfideBonds
+             - 1 * shellBonus;    // penalize/bonus from shell logic
+
         const rating = deltaG < -12 ? '🌟🌟🌟' : deltaG < -6 ? '🌟🌟' : deltaG < 0 ? '🌟' : '🧪';
         const percent = Math.min(100, Math.max(0, 50 + deltaG * -5));
         scoreBar.style.background = `linear-gradient(to right, #ef5350 ${percent}%, #eee ${percent}%)`;
@@ -371,6 +407,7 @@
     💧 Avg dist (Polar): ${coreResult.polarAvg?.toFixed(1) ?? '—'} px  
     📈 Core Score: ${coreResult.coreScore.toFixed(1)}  
     🏅 Core Rating: ${coreResult.stars}
+    🌀 Shell bonus: ${shellBonus}
     🪴 Seed: ${seedDisplay.textContent}
     </div>`;
   
@@ -384,8 +421,8 @@
       }
   
       function evaluateHydrophobicCore(dropped) {
-  let hydros = dropped.filter(el => el.dataset.type === 'hydrophobic');
-  let polars = dropped.filter(el => el.dataset.type === 'polar');
+        let hydros = dropped.filter(el => el.dataset.type === 'hydrophobic');
+        let polars = dropped.filter(el => el.dataset.type === 'polar');
 
   if (hydros.length === 0 || polars.length === 0) {
     return {
@@ -422,34 +459,32 @@
 
 
 
-      function runDemo() {
-        const demoResidues = [
-          { name: 'Glu', x: 60, y: 60 },
-          { name: 'Lys', x: 120, y: 60 },
-          { name: 'Cys', x: 180, y: 60 },
-          { name: 'Cys', x: 240, y: 60 },
-          { name: 'Ala', x: 300, y: 120 },
-          { name: 'Val', x: 180, y: 180 },
-          { name: 'Leu', x: 120, y: 240 },
-          { name: 'Ser', x: 60, y: 180 },
-          { name: 'Thr', x: 120, y: 120 },
-        ];
-        aaBank.innerHTML = '';
-        dropZone.innerHTML = '';
-        demoResidues.forEach((res, i) => {
-          const el = document.createElement('div');
-          el.className = `amino-acid ${types[res.name]}`;
-          el.textContent = res.name;
-          el.dataset.name = res.name;
-          el.dataset.type = types[res.name];
-          el.style.position = 'absolute';
-          el.style.left = res.x + 'px';
-          el.style.top = res.y + 'px';
-          el.classList.add('dropped');
-          dropZone.appendChild(el);
-        });
-        setTimeout(() => checkStructure(), 800);
-      }
+function runDemo(){
+      resetGame();
+      const positions=[
+        // center hydrophobic core, outer polar shell
+        {name:'Leu',x:260,y:160},{name:'Ile',x:300,y:200},{name:'Val',x:220,y:200},{name:'Ala',x:240,y:180},
+        {name:'Phe',x:280,y:180},{name:'Met',x:260,y:200},{name:'Pro',x:240,y:200},{name:'Trp',x:300,y:160},
+        // ring of polars
+        {name:'Ser',x:180,y:140},{name:'Thr',x:340,y:140},{name:'Asn',x:180,y:240},{name:'Gln',x:340,y:240},
+        {name:'Tyr',x:220,y:260},{name:'Gly',x:300,y:260},{name:'His',x:380,y:200},{name:'Arg',x:380,y:120},
+        {name:'Lys',x:120,y:180},{name:'Cys',x:200,y:100},{name:'Cys',x:320,y:300}
+      ];
+      positions.forEach((p,i)=>{
+        const el=createAA(p.name,i);
+        el.classList.add('dropped');
+        el.style.left=p.x+'px'; el.style.top=p.y+'px';
+        dropZone.appendChild(el);
+      });
+      setTimeout(checkStructure,500);
+    }
+
+    dropZone.addEventListener('dragover',e=>e.preventDefault());
+    dropZone.addEventListener('drop',e=>{e.preventDefault();const id=e.dataTransfer.getData('text');const el=document.getElementById(id);
+      el.classList.add('dropped');el.style.position='absolute';const r=dropZone.getBoundingClientRect();
+      el.style.left=`${e.clientX-r.left-30}px`;el.style.top=`${e.clientY-r.top-30}px`;
+      dropZone.appendChild(el);saveGameState();
+    });
   
       function showToast(msg) {
         toast.textContent = msg;
