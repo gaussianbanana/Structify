@@ -176,17 +176,18 @@
 <body>
     <h1>🧪 Structify</h1>
   
-    <div id="demo">
+    div id="demo">
       <div class="highlight-box">
         <strong>🧬 Tutorial:</strong>
-        <p>Drag and drop amino acids into the fold zone. Match acidic and basic residues to form <strong>salt bridges</strong>. Place two <strong>Cys</strong> residues close together to form <strong>disulfide bonds</strong>. Use <strong>WASD</strong> keys to nudge residues. Copy/share puzzle seed below.</p>
-        <p>Drag and drop 9 amino acids into the fold zone to build the best protein structure.
-        </p>
+        <p> Your aim is to build a small peptide structure by placing all 18 amino acids into the fold zone (grey box) with the following considerations to build the best possible protein structure: </p>
         <ul style="text-align:left; font-size: 0.95rem">
           <li><strong>Salt bridges</strong>: Place acidic + basic residues close together (but don’t block them with hydrophobic residues).</li>
           <li><strong>Disulfide bonds</strong>: Place two <code>Cys</code> near each other.</li>
+          <li><strong>Hydrophobic residues</strong> are found in brown</li>
+          <li><strong>Polar residues</strong> are found in blue</li>
+          <li><strong>Acid and Basic</strong> are found in green and red respectively</li>
           <li><strong>WASD</strong>: Use these keys to nudge residues on the board.</li>
-          <li><strong>Score</strong>: Lower ΔG = better fold. Press "Check My Fold" to see your lab report.</li>
+          <li><strong>Score</strong>: Lower ΔG (Gibbs free energy) denotes a better fold. Press "Check My Fold" to see your lab report.</li>
         </ul>
         <button onclick="runDemo()">▶️ Watch a Perfect Structure</button>
       </div>
