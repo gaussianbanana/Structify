@@ -197,7 +197,18 @@
       <p><strong>Goal:</strong> Optimize protein folding by arranging amino acids for best ΔG, salt bridges, and disulfide bonds!</p>
       <div class="bar" id="score-bar"></div>
     </div>
-  
+    <div class="highlight-box">
+      <strong>🔬 Learn About Folding:</strong>
+      <ul style="text-align:left; font-size: 0.95rem">
+        <li><strong>Salt Bridges:</strong> Electrostatic attractions between acidic (–) and basic (+) side chains. Important for structural stability!</li>
+        <li><strong>Disulfide Bonds:</strong> Covalent bonds between two cysteine residues. They stabilize the folded shape of proteins, especially outside the cell.</li>
+        <li><strong>Hydrophobic Effect:</strong> Hydrophobic side chains cluster together inside the protein to avoid water, driving folding!</li>
+        <li><strong>Polar Residues:</strong> Prefer to stay on the surface of the protein where they can interact with water molecules.</li>
+        <li><strong>Gibbs Free Energy (ΔG):</strong> Proteins fold to minimize ΔG — lower values = more stable structures.</li>
+      </ul>
+    </div>
+    
+
     <div class="game-container" id="aa-bank"></div>
     <div class="drop-zone" id="dropZone"></div>
     <div id="controls">
@@ -266,6 +277,8 @@
           selectedResidue = el;
         });
         el.addEventListener('dragstart', e => e.dataTransfer.setData('text/plain', el.id));
+        el.title = `${name}: ${types[name]} amino acid`;
+
         return el;
       }
 
