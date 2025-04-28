@@ -245,9 +245,6 @@
         <p id="inspector-text" style="font-size: 0.95rem;">Click on a residue to learn about it!</p>
       </div>
     </div>
-
-    <div id="live-deltaG" style="font-size:1.2rem; margin-bottom: 0.5rem; color: #333;">ΔG: — kcal/mol</div>
-
     
     <div id="fold-area-wrapper" style="display: flex; justify-content: center; align-items: flex-start; gap: 40px; flex-wrap: wrap; margin: 1rem auto; max-width: 1100px;">
       <div class="drop-zone" id="dropZone"></div>
@@ -542,12 +539,9 @@ function updateInspector(name) {
     ⚡ ΔG (folding energy): ${deltaG.toFixed(2)} kcal/mol
     🏅 Structure Rating: ${rating}
 
-    🧩 <strong>Hydrophobic Core Packing</strong>
+       🧩 <strong>Hydrophobic Core Packing</strong>
     ----------------------------------------
-    📍 Avg dist (Hydrophobic): ${coreResult.hydroAvg?.toFixed(1) ?? '—'} px  
-    💧 Avg dist (Polar): ${coreResult.polarAvg?.toFixed(1) ?? '—'} px  
-    📈 Core Score: ${coreResult.coreScore.toFixed(1)}  
-    🏅 Core Rating: ${coreResult.stars}
+    🏅 Core Quality: ${coreResult.qualityLabel}
     🌀 Shell bonus: ${shellBonus}
     🪴 Seed: ${seedDisplay.textContent}
     
@@ -632,6 +626,18 @@ report.innerHTML += `<p style="font-size:0.9rem; color:#555;">💡 <strong>Did y
 
   const score = Math.max(0, polarAvgDist - hydroAvgDist);
   const stars = score > 40 ? '🌟🌟🌟' : score > 20 ? '🌟🌟' : score > 5 ? '🌟' : '🧪';
+
+  let qualityLabel = '';
+if (score > 40) {
+  qualityLabel = 'Excellent Core Packing';
+} else if (score > 20) {
+  qualityLabel = 'Good Core Packing';
+} else if (score > 5) {
+  qualityLabel = 'Fair Core Packing';
+} else {
+  qualityLabel = 'Poor Core Packing';
+}
+
 
   return {
     coreScore: score,
