@@ -171,6 +171,34 @@
   background: var(--secondary);
 }
 
+#fold-area-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center; 
+  gap: 20px;          
+  margin: 1rem auto;
+  max-width: 1100px;
+  flex-wrap: wrap;
+}
+
+
+#bank-inspector-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin: 1rem auto;
+  max-width: 900px;
+}
+
+#inspector {
+  width: 250px;
+  min-height: 150px;
+}
+
+
+
   </style>
 </head>
 <body>
@@ -209,8 +237,24 @@
       <div class="bar" id="score-bar"></div>
     </div>
 
-    <div class="game-container" id="aa-bank"></div>
-    <div class="drop-zone" id="dropZone"></div>
+    <div id="bank-inspector-wrapper" style="display: flex; justify-content: center; align-items: flex-start; gap: 20px; flex-wrap: wrap; margin: 1rem auto; max-width: 900px;">
+      <div class="game-container" id="aa-bank"></div>
+    
+      <div id="inspector" class="highlight-box" style="display:none; width: 250px; min-height: 150px;">
+        <strong>🔬 Residue Inspector:</strong>
+        <p id="inspector-text" style="font-size: 0.95rem;">Click on a residue to learn about it!</p>
+      </div>
+    </div>
+    
+    <div id="fold-area-wrapper" style="display: flex; justify-content: center; align-items: flex-start; gap: 40px; flex-wrap: wrap; margin: 1rem auto; max-width: 1100px;">
+      <div class="drop-zone" id="dropZone"></div>
+    
+      <div id="inspector" class="highlight-box" style="display:none; width: 250px; min-height: 180px;">
+        <strong>🔬 Residue Inspector:</strong>
+        <p id="inspector-text" style="font-size: 0.95rem;">Click on a residue to learn about it!</p>
+      </div>
+    </div>    
+    
     <div id="controls">
         <div class="button-group">
           <button class="lab-button" onclick="checkStructure()">Check My Fold</button>
@@ -228,6 +272,10 @@
       <button onclick="copyReportToClipboard()">📑 Copy Lab Report</button>
     </div>
     <div id="score-report"></div>
+    <div id="inspector" class="highlight-box" style="display:none;">
+      <strong>🔬 Residue Inspector:</strong>
+      <p id="inspector-text" style="font-size: 0.95rem;">Click on a residue to learn about it!</p>
+    </div>
     <div id="toast">Nice Fold!</div>
   
     <script src="https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js"></script>
@@ -262,7 +310,30 @@
         selectedResidue.style.top = `${Math.round(top / SNAP_SIZE) * SNAP_SIZE}px`;
         saveGameState();
       });
-  
+      const aminoAcidInfo = {
+  Ala: { full: "Alanine", polarity: "Nonpolar", charge: "Neutral" },
+  Arg: { full: "Arginine", polarity: "Polar", charge: "Positive" },
+  Asn: { full: "Asparagine", polarity: "Polar", charge: "Neutral" },
+  Asp: { full: "Aspartic Acid", polarity: "Polar", charge: "Negative" },
+  Cys: { full: "Cysteine", polarity: "Nonpolar", charge: "Neutral" },
+  Glu: { full: "Glutamic Acid", polarity: "Polar", charge: "Negative" },
+  Gln: { full: "Glutamine", polarity: "Polar", charge: "Neutral" },
+  Gly: { full: "Glycine", polarity: "Nonpolar", charge: "Neutral" },
+  His: { full: "Histidine", polarity: "Polar", charge: "Positive" },
+  Ile: { full: "Isoleucine", polarity: "Nonpolar", charge: "Neutral" },
+  Leu: { full: "Leucine", polarity: "Nonpolar", charge: "Neutral" },
+  Lys: { full: "Lysine", polarity: "Polar", charge: "Positive" },
+  Met: { full: "Methionine", polarity: "Nonpolar", charge: "Neutral" },
+  Phe: { full: "Phenylalanine", polarity: "Nonpolar", charge: "Neutral" },
+  Pro: { full: "Proline", polarity: "Nonpolar", charge: "Neutral" },
+  Ser: { full: "Serine", polarity: "Polar", charge: "Neutral" },
+  Thr: { full: "Threonine", polarity: "Polar", charge: "Neutral" },
+  Trp: { full: "Tryptophan", polarity: "Nonpolar", charge: "Neutral" },
+  Tyr: { full: "Tyrosine", polarity: "Polar", charge: "Neutral" },
+  Val: { full: "Valine", polarity: "Nonpolar", charge: "Neutral" }
+};
+
+
       function createAA(name, i, fromBank = true) { 
   const el = document.createElement('div');
   el.className = `amino-acid ${types[name]}`;
@@ -271,17 +342,33 @@
   el.dataset.name = name;
   el.dataset.type = types[name];
   if (fromBank) {
-    el.dataset.fromBank = "true";   // Only tag if truly from the bank
+    el.dataset.fromBank = "true";   // hopefully this works
   }
   el.draggable = true;
   el.addEventListener('click', () => {
-    document.querySelectorAll('.selected').forEach(e => e.classList.remove('selected'));
-    el.classList.add('selected');
-    selectedResidue = el;
-  });
+  document.querySelectorAll('.selected').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedResidue = el;
+  updateInspector(el.dataset.name);
+});
   el.addEventListener('dragstart', e => e.dataTransfer.setData('text/plain', el.id));
   el.title = `${name}: ${types[name]} amino acid`;
   return el;
+}
+
+function updateInspector(name) {
+  const info = aminoAcidInfo[name];
+  if (!info) return;
+
+  const inspector = document.getElementById('inspector');
+  const inspectorText = document.getElementById('inspector-text');
+  
+  inspector.style.display = 'block';
+  inspectorText.innerHTML = `
+    <strong>${name} – ${info.full}</strong><br>
+    Polarity: ${info.polarity}<br>
+    Charge at pH 7: ${info.charge}
+  `;
 }
 
 
