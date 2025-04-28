@@ -663,6 +663,13 @@ el.style.top = `${e.clientY - rect.top - 30}px`;
         generateResidues("daily-" + new Date().toISOString().split('T')[0]);
       }
 
+      function generateTodaySeed() {
+  resetGame();
+  const todaySeed = "daily-" + new Date().toISOString().split('T')[0];
+  generateResidues(todaySeed);
+}
+
+
       function loadSeedPuzzle() {
   const input = document.getElementById('seed-input').value.trim();
   if (input) {
