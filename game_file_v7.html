@@ -245,6 +245,9 @@
         <p id="inspector-text" style="font-size: 0.95rem;">Click on a residue to learn about it!</p>
       </div>
     </div>
+
+    <div id="live-deltaG" style="font-size:1.2rem; margin-bottom: 0.5rem; color: #333;">ΔG: — kcal/mol</div>
+
     
     <div id="fold-area-wrapper" style="display: flex; justify-content: center; align-items: flex-start; gap: 40px; flex-wrap: wrap; margin: 1rem auto; max-width: 1100px;">
       <div class="drop-zone" id="dropZone"></div>
@@ -309,6 +312,8 @@
         selectedResidue.style.left = `${Math.round(left / SNAP_SIZE) * SNAP_SIZE}px`;
         selectedResidue.style.top = `${Math.round(top / SNAP_SIZE) * SNAP_SIZE}px`;
         saveGameState();
+        updateLiveDeltaG();
+
       });
       const aminoAcidInfo = {
   Ala: { full: "Alanine", polarity: "Nonpolar", charge: "Neutral" },
@@ -391,28 +396,52 @@ function updateInspector(name) {
       }
   
       function generateResidues(seed) {
-        seedDisplay.textContent = seed;
-        const rng = new Math.seedrandom(seed);
-        const shuffled = aminoAcids.slice().sort(() => rng() - 0.5);
-        const set = [];
-        // Guarantee one acidic and one basic and maybe having at least with cystiene residues?
-        const acidicResidues = ["Asp", "Glu"];
-        const basicResidues = ["Arg", "Lys", "His"];
-        set.push(acidicResidues[Math.floor(rng() * acidicResidues.length)]);
-        set.push(basicResidues[Math.floor(rng() * basicResidues.length)]);
-        set.push("Cys");
-        set.push("Cys");
-        // Fill the rest with random AAs (including possible repeats)
-        while (set.length < 18) {
-            const pick = aminoAcids[Math.floor(rng() * aminoAcids.length)];
-            set.push(pick);
-        }
-        set.sort(() => rng() -0.5);
+  seedDisplay.textContent = seed;
+  const rng = new Math.seedrandom(seed);
+  const shuffled = aminoAcids.slice().sort(() => rng() - 0.5);
+  const set = [];
 
-        aaBank.innerHTML = '';
-        set.forEach((name, i) => aaBank.appendChild(createAA(name, i)));
-      }
+  const acidicResidues = ["Asp", "Glu"];
+  const basicResidues = ["Arg", "Lys", "His"];
+  set.push(acidicResidues[Math.floor(rng() * acidicResidues.length)]);
+  set.push(basicResidues[Math.floor(rng() * basicResidues.length)]);
+  set.push("Cys");
+  set.push("Cys");
+
+  while (set.length < 18) {
+      const pick = aminoAcids[Math.floor(rng() * aminoAcids.length)];
+      set.push(pick);
+  }
+  set.sort(() => rng() -0.5);
+
+  const difficulty = assignDifficulty(set);
+  seedDisplay.textContent = `${seed} (${difficulty})`;
+
+  aaBank.innerHTML = '';
+  set.forEach((name, i) => aaBank.appendChild(createAA(name, i)));
+}
+
   
+      function assignDifficulty(set) {
+  let hydroCount = 0;
+  let polarCount = 0;
+
+  set.forEach(name => {
+    const type = types[name];
+    if (type === "hydrophobic") hydroCount++;
+    if (type === "polar") polarCount++;
+  });
+
+  // Now assign difficulty
+  if (hydroCount >= 8) {
+    return "Easy 🌱";
+  } else if (hydroCount >= 5) {
+    return "Medium 🌿";
+  } else {
+    return "Hard 🌵";
+  }
+}
+
       function resetGame() {
   localStorage.removeItem('foldGameState');
   [...document.querySelectorAll('.dropped')].forEach(el => {
@@ -427,6 +456,8 @@ function updateInspector(name) {
   });
   report.innerHTML = '';
   scoreBar.style.background = '';
+  document.getElementById('live-deltaG').textContent = "ΔG: — kcal/mol";
+
 }
 
   
@@ -467,6 +498,8 @@ function updateInspector(name) {
       y: el.offsetTop  + el.offsetHeight/2
     };
   }
+
+
 
   hydros.forEach(h => {
     const c = elemCenter(h);
@@ -610,6 +643,65 @@ report.innerHTML += `<p style="font-size:0.9rem; color:#555;">💡 <strong>Did y
 }
 
 
+function calculateCurrentDeltaG() {
+  const dropped = [...document.querySelectorAll('.drop-zone .dropped')];
+  const rect = dropZone.getBoundingClientRect();
+  const CORE_RADIUS = Math.min(rect.width, rect.height) * 0.4;
+  const CENTER = { x: rect.width / 2, y: rect.height / 2 };
+
+  const acids = dropped.filter(el => el.dataset.type === 'acidic');
+  const bases = dropped.filter(el => el.dataset.type === 'basic');
+  const hydros = dropped.filter(el => el.dataset.type === 'hydrophobic');
+  const polars = dropped.filter(el => el.dataset.type === 'polar');
+  const cysteines = dropped.filter(el => el.dataset.name === 'Cys');
+
+  let saltBridges = 0;
+  acids.forEach(a => {
+    bases.forEach(b => {
+      const dist = Math.hypot(a.offsetLeft - b.offsetLeft, a.offsetTop - b.offsetTop);
+      const hydrophobicBlock = hydros.some(h => Math.hypot((h.offsetLeft - (a.offsetLeft + b.offsetLeft) / 2), (h.offsetTop - (a.offsetTop + b.offsetTop) / 2)) < 80);
+      if (dist < 150 && !hydrophobicBlock) saltBridges++;
+    });
+  });
+
+  let disulfideBonds = 0;
+  for (let i = 0; i < cysteines.length; i++) {
+    for (let j = i + 1; j < cysteines.length; j++) {
+      const dist = Math.hypot(cysteines[i].offsetLeft - cysteines[j].offsetLeft, cysteines[i].offsetTop - cysteines[j].offsetTop);
+      if (dist < 120) disulfideBonds++;
+    }
+  }
+
+  let shellBonus = 0;
+  function elemCenter(el) {
+    return {
+      x: el.offsetLeft + el.offsetWidth/2,
+      y: el.offsetTop  + el.offsetHeight/2
+    };
+  }
+
+  hydros.forEach(h => {
+    const c = elemCenter(h);
+    if (Math.hypot(c.x - CENTER.x, c.y - CENTER.y) < CORE_RADIUS) {
+      shellBonus += 1;
+    } else {
+      shellBonus -= 1;
+    }
+  });
+
+  polars.forEach(p => {
+    const c = elemCenter(p);
+    if (Math.hypot(c.x - CENTER.x, c.y - CENTER.y) > CORE_RADIUS) {
+      shellBonus += 1;
+    } else {
+      shellBonus -= 1;
+    }
+  });
+
+  const deltaG = -2 * hydros.length + polars.length - 3 * saltBridges - 4 * disulfideBonds - 1 * shellBonus;
+  return deltaG;
+}
+
 
 function runDemo(){
       resetGame();
@@ -636,6 +728,8 @@ function runDemo(){
       el.classList.add('dropped');el.style.position='absolute';const r=dropZone.getBoundingClientRect();
       el.style.left=`${e.clientX-r.left-30}px`;el.style.top=`${e.clientY-r.top-30}px`;
       dropZone.appendChild(el);saveGameState();
+      updateLiveDeltaG();
+
     });
   
       function showToast(msg) {
@@ -644,20 +738,6 @@ function runDemo(){
         setTimeout(() => toast.className = toast.className.replace("show", ""), 3000);
       }
   
-      dropZone.addEventListener('dragover', e => e.preventDefault());
-      dropZone.addEventListener('drop', e => {
-        e.preventDefault();
-        const id = e.dataTransfer.getData('text/plain');
-        const el = document.getElementById(id);
-        el.classList.add('dropped');
-        el.style.position = 'absolute';
-        const rect = dropZone.getBoundingClientRect();
-el.style.left = `${e.clientX - rect.left - 30}px`;
-el.style.top = `${e.clientY - rect.top - 30}px`;
-
-        dropZone.appendChild(el);
-        saveGameState();
-      });
   
       window.onload = () => {
         generateResidues("daily-" + new Date().toISOString().split('T')[0]);
@@ -669,6 +749,11 @@ el.style.top = `${e.clientY - rect.top - 30}px`;
   generateResidues(todaySeed);
 }
 
+function updateLiveDeltaG() {
+  const deltaG = calculateCurrentDeltaG();
+  const liveDisplay = document.getElementById('live-deltaG');
+  liveDisplay.textContent = `ΔG: ${deltaG.toFixed(2)} kcal/mol`;
+}
 
       function loadSeedPuzzle() {
   const input = document.getElementById('seed-input').value.trim();
