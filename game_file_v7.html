@@ -234,8 +234,10 @@
     </div>
     <div id="tutorial">
       <p><strong>Goal:</strong> Optimize protein folding by arranging amino acids for best ΔG, salt bridges, and disulfide bonds!</p>
+      <p id="live-deltaG">ΔG: — kcal/mol</p>
       <div class="bar" id="score-bar"></div>
     </div>
+    
 
     <div id="bank-inspector-wrapper" style="display: flex; justify-content: center; align-items: flex-start; gap: 20px; flex-wrap: wrap; margin: 1rem auto; max-width: 900px;">
       <div class="game-container" id="aa-bank"></div>
@@ -280,6 +282,7 @@
   
     <script src="https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js"></script>
     <script>
+      function saveGameState() {}
       const aaBank = document.getElementById('aa-bank');
       const dropZone = document.getElementById('dropZone');
       const report = document.getElementById('score-report');
@@ -308,7 +311,6 @@
         if (e.key === 'd') left += SNAP_SIZE;
         selectedResidue.style.left = `${Math.round(left / SNAP_SIZE) * SNAP_SIZE}px`;
         selectedResidue.style.top = `${Math.round(top / SNAP_SIZE) * SNAP_SIZE}px`;
-        saveGameState();
         updateLiveDeltaG();
 
       });
@@ -336,7 +338,7 @@
 };
 
 
-      function createAA(name, i, fromBank = true) { 
+function createAA(name, i, fromBank = true) { 
   const el = document.createElement('div');
   el.className = `amino-acid ${types[name]}`;
   el.textContent = name;
@@ -344,19 +346,20 @@
   el.dataset.name = name;
   el.dataset.type = types[name];
   if (fromBank) {
-    el.dataset.fromBank = "true";   // hopefully this works
+    el.dataset.fromBank = "true";   // Only add this if it's from the bank!
   }
   el.draggable = true;
   el.addEventListener('click', () => {
-  document.querySelectorAll('.selected').forEach(e => e.classList.remove('selected'));
-  el.classList.add('selected');
-  selectedResidue = el;
-  updateInspector(el.dataset.name);
-});
+    document.querySelectorAll('.selected').forEach(e => e.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedResidue = el;
+    updateInspector(el.dataset.name);
+  });
   el.addEventListener('dragstart', e => e.dataTransfer.setData('text/plain', el.id));
   el.title = `${name}: ${types[name]} amino acid`;
   return el;
 }
+
 
 function updateInspector(name) {
   const info = aminoAcidInfo[name];
@@ -374,7 +377,79 @@ function updateInspector(name) {
 }
 
 
-      function copyReportToClipboard() {
+
+
+    dropZone.addEventListener('dragover',e=>e.preventDefault());
+    dropZone.addEventListener('drop',e=>{e.preventDefault();const id=e.dataTransfer.getData('text');const el=document.getElementById(id);
+      el.classList.add('dropped');el.style.position='absolute';const r=dropZone.getBoundingClientRect();
+      el.style.left=`${e.clientX-r.left-30}px`;el.style.top=`${e.clientY-r.top-30}px`;
+      dropZone.appendChild(el);
+      updateLiveDeltaG();
+
+    });
+  
+      function showToast(msg) {
+        toast.textContent = msg;
+        toast.className = "show";
+        setTimeout(() => toast.className = toast.className.replace("show", ""), 3000);
+      }
+  
+  
+      window.onload = () => {
+        generateResidues("daily-" + new Date().toISOString().split('T')[0]);
+        
+      }
+      window.runDemo = runDemo;
+
+      function generateTodaySeed() {
+  resetGame();
+  const todaySeed = "daily-" + new Date().toISOString().split('T')[0];
+  generateResidues(todaySeed);
+}
+
+
+function runDemo() {
+  resetGame();
+  const dropZone = document.getElementById('dropZone');
+
+  const positions = [
+    {name:'Leu',x:260,y:160},{name:'Ile',x:300,y:200},{name:'Val',x:220,y:200},{name:'Ala',x:240,y:180},
+    {name:'Phe',x:280,y:180},{name:'Met',x:260,y:200},{name:'Pro',x:240,y:200},{name:'Trp',x:300,y:160},
+    {name:'Ser',x:180,y:140},{name:'Thr',x:340,y:140},{name:'Asn',x:180,y:240},{name:'Gln',x:340,y:240},
+    {name:'Tyr',x:220,y:260},{name:'Gly',x:300,y:260},{name:'His',x:380,y:200},{name:'Arg',x:380,y:120},
+    {name:'Lys',x:120,y:180},{name:'Cys',x:200,y:100},{name:'Cys',x:320,y:300}
+  ];
+
+  let i = 0;
+
+  function dropNext() {
+    if (i >= positions.length) {
+      setTimeout(checkStructure, 500);
+      return;
+    }
+    const p = positions[i];
+    const el = document.createElement('div');
+    el.className = `amino-acid ${types[p.name]}`;
+    el.textContent = p.name;
+    el.dataset.name = p.name;
+    el.dataset.type = types[p.name];
+    el.style.position = 'absolute';
+    el.style.left = p.x + 'px';
+    el.style.top = p.y + 'px';
+    el.classList.add('dropped');
+    dropZone.appendChild(el);
+    i++;
+    setTimeout(dropNext, 120);
+  }
+
+  dropNext();
+}
+
+
+
+
+
+function copyReportToClipboard() {
         const text = document.getElementById('score-report').innerText;
         navigator.clipboard.writeText(text).then(() => {
           showToast("📑 Report copied!");
@@ -709,51 +784,6 @@ function calculateCurrentDeltaG() {
 }
 
 
-function runDemo(){
-      resetGame();
-      const positions=[
-        // center hydrophobic core, outer polar shell
-        {name:'Leu',x:260,y:160},{name:'Ile',x:300,y:200},{name:'Val',x:220,y:200},{name:'Ala',x:240,y:180},
-        {name:'Phe',x:280,y:180},{name:'Met',x:260,y:200},{name:'Pro',x:240,y:200},{name:'Trp',x:300,y:160},
-        // ring of polars
-        {name:'Ser',x:180,y:140},{name:'Thr',x:340,y:140},{name:'Asn',x:180,y:240},{name:'Gln',x:340,y:240},
-        {name:'Tyr',x:220,y:260},{name:'Gly',x:300,y:260},{name:'His',x:380,y:200},{name:'Arg',x:380,y:120},
-        {name:'Lys',x:120,y:180},{name:'Cys',x:200,y:100},{name:'Cys',x:320,y:300}
-      ];
-      positions.forEach((p,i)=>{
-        const el = createAA(p.name, i, false);
-        el.classList.add('dropped');
-        el.style.left=p.x+'px'; el.style.top=p.y+'px';
-        dropZone.appendChild(el);
-      });
-      setTimeout(checkStructure,500);
-    }
-
-    dropZone.addEventListener('dragover',e=>e.preventDefault());
-    dropZone.addEventListener('drop',e=>{e.preventDefault();const id=e.dataTransfer.getData('text');const el=document.getElementById(id);
-      el.classList.add('dropped');el.style.position='absolute';const r=dropZone.getBoundingClientRect();
-      el.style.left=`${e.clientX-r.left-30}px`;el.style.top=`${e.clientY-r.top-30}px`;
-      dropZone.appendChild(el);saveGameState();
-      updateLiveDeltaG();
-
-    });
-  
-      function showToast(msg) {
-        toast.textContent = msg;
-        toast.className = "show";
-        setTimeout(() => toast.className = toast.className.replace("show", ""), 3000);
-      }
-  
-  
-      window.onload = () => {
-        generateResidues("daily-" + new Date().toISOString().split('T')[0]);
-      }
-
-      function generateTodaySeed() {
-  resetGame();
-  const todaySeed = "daily-" + new Date().toISOString().split('T')[0];
-  generateResidues(todaySeed);
-}
 
 function updateLiveDeltaG() {
   const deltaG = calculateCurrentDeltaG();
