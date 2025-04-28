@@ -193,10 +193,7 @@
       </div>
     </div>
   
-    <div id="tutorial">
-      <p><strong>Goal:</strong> Optimize protein folding by arranging amino acids for best ΔG, salt bridges, and disulfide bonds!</p>
-      <div class="bar" id="score-bar"></div>
-    </div>
+
     <div class="highlight-box">
       <strong>🔬 Learn About Folding:</strong>
       <ul style="text-align:left; font-size: 0.95rem">
@@ -207,7 +204,10 @@
         <li><strong>Gibbs Free Energy (ΔG):</strong> Proteins fold to minimize ΔG — lower values = more stable structures.</li>
       </ul>
     </div>
-    
+    <div id="tutorial">
+      <p><strong>Goal:</strong> Optimize protein folding by arranging amino acids for best ΔG, salt bridges, and disulfide bonds!</p>
+      <div class="bar" id="score-bar"></div>
+    </div>
 
     <div class="game-container" id="aa-bank"></div>
     <div class="drop-zone" id="dropZone"></div>
@@ -263,24 +263,27 @@
         saveGameState();
       });
   
-      function createAA(name, i) {
-        const el = document.createElement('div');
-        el.className = `amino-acid ${types[name]}`;
-        el.textContent = name;
-        el.id = `aa-${i}`;
-        el.dataset.name = name;
-        el.dataset.type = types[name];
-        el.draggable = true;
-        el.addEventListener('click', () => {
-          document.querySelectorAll('.selected').forEach(e => e.classList.remove('selected'));
-          el.classList.add('selected');
-          selectedResidue = el;
-        });
-        el.addEventListener('dragstart', e => e.dataTransfer.setData('text/plain', el.id));
-        el.title = `${name}: ${types[name]} amino acid`;
+      function createAA(name, i, fromBank = true) { 
+  const el = document.createElement('div');
+  el.className = `amino-acid ${types[name]}`;
+  el.textContent = name;
+  el.id = `aa-${i}`;
+  el.dataset.name = name;
+  el.dataset.type = types[name];
+  if (fromBank) {
+    el.dataset.fromBank = "true";   // Only tag if truly from the bank
+  }
+  el.draggable = true;
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.selected').forEach(e => e.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedResidue = el;
+  });
+  el.addEventListener('dragstart', e => e.dataTransfer.setData('text/plain', el.id));
+  el.title = `${name}: ${types[name]} amino acid`;
+  return el;
+}
 
-        return el;
-      }
 
       function copyReportToClipboard() {
         const text = document.getElementById('score-report').innerText;
@@ -324,16 +327,21 @@
       }
   
       function resetGame() {
-        localStorage.removeItem('foldGameState');
-        [...document.querySelectorAll('.dropped')].forEach(el => {
-          el.style = '';
-          el.classList.remove('dropped', 'selected');
-          el.setAttribute('draggable', true);
-          aaBank.appendChild(el);
-        });
-        report.innerHTML = '';
-        scoreBar.style.background = '';
-      }
+  localStorage.removeItem('foldGameState');
+  [...document.querySelectorAll('.dropped')].forEach(el => {
+    if (el.dataset.fromBank === "true") { 
+      el.style = '';
+      el.classList.remove('dropped', 'selected');
+      el.setAttribute('draggable', true);
+      aaBank.appendChild(el);
+    } else {
+      el.remove(); 
+    }
+  });
+  report.innerHTML = '';
+  scoreBar.style.background = '';
+}
+
   
       function checkStructure() {
         const dropped = [...document.querySelectorAll('.drop-zone .dropped')];
@@ -422,8 +430,52 @@
     🏅 Core Rating: ${coreResult.stars}
     🌀 Shell bonus: ${shellBonus}
     🪴 Seed: ${seedDisplay.textContent}
+    
     </div>`;
-  
+
+let finalNote = "";
+if (deltaG < -15) {
+  finalNote = "🌟 Incredible! Your structure is highly stable with a tight hydrophobic core and strong bonding.";
+} else if (deltaG < -10) {
+  finalNote = "✨ Great work! Your structure has good folding energy and decent core packing.";
+} else if (deltaG < -5) {
+  finalNote = "👍 Nice fold! Small improvements could stabilize it even further — check hydrophobic core packing.";
+} else if (deltaG < 0) {
+  finalNote = "🧪 Not bad — consider clustering hydrophobic residues tighter and forming more salt bridges.";
+} else {
+  finalNote = "🔬 The fold is unstable — try placing hydrophobics inside and forming more salt bridges or disulfide bonds.";
+}
+
+report.innerHTML += `<p style="font-size:0.95rem; color:#333;">📝 <strong>Analysis:</strong> ${finalNote}</p>`;
+
+    const facts = [
+  "Proteins fold within milliseconds — much faster than random chance predicts (Levinthal's paradox)!",
+  "Disulfide bonds between cysteines stabilize proteins like insulin and antibodies.",
+  "Salt bridges stabilize proteins, especially in thermophiles (organisms that love heat).",
+  "Hydrophobic residues tend to hide inside proteins, away from water.",
+  "Polar residues prefer to be on the outside, interacting with the watery environment.",
+  "Protein folding errors can cause diseases like Alzheimer's and cystic fibrosis.",
+  "Chaperones are special helper proteins that assist in folding other proteins.",
+  "Hydrophobic collapse is often the first step in protein folding.",
+  "Gibbs Free Energy (ΔG) must decrease for spontaneous protein folding.",
+  "Proteins fold into the structure with the lowest possible ΔG — their most stable form.",
+  "Disulfide bonds are covalent and extremely strong compared to salt bridges.",
+  "Electrostatic interactions between charged side chains contribute to folding stability.",
+  "Hydrogen bonds help form secondary structures like alpha helices and beta sheets.",
+  "The hydrophobic effect is a major driver of protein folding in aqueous environments.",
+  "Some proteins fold into multiple conformations — this is called structural plasticity.",
+  "Extremophiles evolved proteins with extra salt bridges to survive intense heat.",
+  "Misfolded proteins can aggregate and form plaques, damaging cells.",
+  "Van der Waals forces, though weak individually, contribute to protein stability when combined.",
+  "Proteins fold hierarchically: local structures first, then global structures.",
+  "The 'folding funnel' model describes how proteins collapse toward their native state efficiently."
+];
+
+const randomFact = facts[Math.floor(Math.random() * facts.length)];
+report.innerHTML += `<p style="font-size:0.9rem; color:#555;">💡 <strong>Did you know?</strong> ${randomFact}</p>`;
+
+
+    
         showToast(deltaG < -6 ? "✨ Nice Fold!" : "🤏 Could be tighter...");
       }
   
@@ -484,7 +536,7 @@ function runDemo(){
         {name:'Lys',x:120,y:180},{name:'Cys',x:200,y:100},{name:'Cys',x:320,y:300}
       ];
       positions.forEach((p,i)=>{
-        const el=createAA(p.name,i);
+        const el = createAA(p.name, i, false);
         el.classList.add('dropped');
         el.style.left=p.x+'px'; el.style.top=p.y+'px';
         dropZone.appendChild(el);
