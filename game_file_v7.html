@@ -439,12 +439,27 @@ function runDemo() {
   const dropZone = document.getElementById('dropZone');
 
   const positions = [
-    {name:'Leu',x:260,y:160},{name:'Ile',x:300,y:200},{name:'Val',x:220,y:200},{name:'Ala',x:240,y:180},
-    {name:'Phe',x:280,y:180},{name:'Met',x:260,y:200},{name:'Pro',x:240,y:200},{name:'Trp',x:300,y:160},
-    {name:'Ser',x:180,y:140},{name:'Thr',x:340,y:140},{name:'Asn',x:180,y:240},{name:'Gln',x:340,y:240},
-    {name:'Tyr',x:220,y:260},{name:'Gly',x:300,y:260},{name:'His',x:380,y:200},{name:'Arg',x:380,y:120},
-    {name:'Lys',x:120,y:180},{name:'Cys',x:200,y:100},{name:'Cys',x:320,y:300}
-  ];
+  {name:'Leu',x:260,y:160},
+  {name:'Ile',x:300,y:200},
+  {name:'Val',x:220,y:200},
+  {name:'Ala',x:240,y:180},
+  {name:'Phe',x:280,y:180},
+  {name:'Met',x:260,y:200},
+  {name:'Pro',x:240,y:200},
+  {name:'Trp',x:300,y:160},
+  {name:'Ser',x:180,y:140},
+  {name:'Thr',x:340,y:140},
+  {name:'Asn',x:180,y:240},
+  {name:'Gln',x:340,y:240},
+  {name:'Tyr',x:220,y:260},
+  {name:'Gly',x:300,y:260},
+  {name:'His',x:380,y:200},
+  {name:'Arg',x:380,y:120},
+  {name:'Lys',x:120,y:180},
+  {name:'Cys',x:220,y:120}, // 🧪 Cys 1 - moved near center
+  {name:'Cys',x:260,y:120}  // 🧪 Cys 2 - placed very close to Cys 1 (40px apart horizontally)
+];
+
 
   let i = 0;
 
@@ -834,67 +849,86 @@ function updateLiveDeltaG() {
 <button id="preview3d-toggle" class="lab-button">🎥 Open 3D Preview</button>
 
 <script>
-  window.addEventListener('DOMContentLoaded', () => {
-    let preview3dWindow = null;
-    const toggle = document.getElementById('preview3d-toggle');
-    if (!toggle) return;
-    toggle.addEventListener('click', () => {
-      // Open or focus the preview window
-      if (!preview3dWindow || preview3dWindow.closed) {
-        preview3dWindow = window.open('', 'Structify 3D Preview', 'width=600,height=600');
-        const previewHtml = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>3D Preview</title>
-  <style>body{margin:0;overflow:hidden;}canvas{display:block;}</style>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-</head>
-<body>
-  <script>
-    // grab placed residues from opener
-    const drops = window.opener.document.querySelectorAll('.drop-zone .dropped');
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 1, 2000);
-    camera.position.set(0, 0, 500);
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
-    const controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    scene.add(new THREE.AmbientLight(0xffffff, 1));
-    const colorMap = { hydrophobic: 0x6d4c41, polar: 0x42a5f5, acidic: 0xef5350, basic: 0x66bb6a, disulfide: 0xff9800 };
-    drops.forEach(el => {
-      const geom = new THREE.SphereGeometry(15, 16, 16);
-      const mat = new THREE.MeshStandardMaterial({ color: colorMap[el.dataset.type] || 0x888888 });
-      const sphere = new THREE.Mesh(geom, mat);
-      const rect = el.parentElement.getBoundingClientRect();
-      const x = el.offsetLeft + el.offsetWidth/2 - rect.width/2;
-      const y = -(el.offsetTop + el.offsetHeight/2 - rect.height/2);
-      // depth: hydrophobic near core, others peripheral
-      let z = (Math.random() - 0.5) * (el.dataset.type === 'hydrophobic' ? 50 : 250);
-      sphere.position.set(x, y, z);
-      scene.add(sphere);
-    });
-    (function animate(){
-      requestAnimationFrame(animate);
-      controls.update();
-      renderer.render(scene, camera);
-    })();
-  <\/script>
-</body>
-</html>`;
-        preview3dWindow.document.open();
-        preview3dWindow.document.write(previewHtml);
-        preview3dWindow.document.close();
-      } else {
-        preview3dWindow.focus();
-      }
-    });
+  let preview3dWindow = null;
+  document.getElementById('preview3d-toggle').addEventListener('click', () => {
+    if (!preview3dWindow || preview3dWindow.closed) {
+      preview3dWindow = window.open('', 'Structify 3D Preview', 'width=600,height=600');
+      const doc = preview3dWindow.document;
+      doc.open();
+      doc.write('<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>3D Preview</title><style>body{margin:0;overflow:hidden;}canvas{display:block;}</style></head><body></body></html>');
+      doc.close();
+      // load Three.js
+      const scriptThree = doc.createElement('script');
+      scriptThree.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+      scriptThree.onload = () => {
+        // load OrbitControls
+        const scriptCtrl = doc.createElement('script');
+        scriptCtrl.src = 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js';
+        scriptCtrl.onload = () => {
+          // initialize scene
+          const init = doc.createElement('script');
+          init.text = `
+            const drops = window.opener.document.querySelectorAll('.drop-zone .dropped');
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 1, 2000);
+camera.position.set(0, 0, 600);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+scene.add(new THREE.AmbientLight(0xffffff, 1));
+
+const colorMap = {
+  hydrophobic: 0x6d4c41,
+  polar: 0x42a5f5,
+  acidic: 0xef5350,
+  basic: 0x66bb6a,
+  disulfide: 0xff9800
+};
+
+drops.forEach(el => {
+  const geom = new THREE.SphereGeometry(15, 16, 16);
+  const mat = new THREE.MeshStandardMaterial({ color: colorMap[el.dataset.type] || 0x888888 });
+  const sphere = new THREE.Mesh(geom, mat);
+  
+  const rect = el.parentElement.getBoundingClientRect();
+  let x = el.offsetLeft + el.offsetWidth/2 - rect.width/2;
+  let y = -(el.offsetTop + el.offsetHeight/2 - rect.height/2);
+
+  if (el.dataset.type === 'hydrophobic') {
+    // Cluster hydrophobics toward center
+    x *= 0.4; // pull closer
+    y *= 0.4;
+    var z = (Math.random() - 0.5) * 40; // small Z range near 0
+  } else {
+    // Other residues more spread out
+    x *= 1.1 + (Math.random() - 0.5) * 0.2; // small random spread
+    y *= 1.1 + (Math.random() - 0.5) * 0.2;
+    var z = (Math.random() - 0.5) * 200; // wide Z range
+  }
+  
+  sphere.position.set(x, y, z);
+  scene.add(sphere);
+});
+
+(function animate(){
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
+})();
+
+
+          `;
+          doc.body.appendChild(init);
+        };
+        doc.body.appendChild(scriptCtrl);
+      };
+      doc.body.appendChild(scriptThree);
+    } else {
+      preview3dWindow.focus();
+    }
   });
 </script>
-
 
 
 
