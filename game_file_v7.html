@@ -197,9 +197,34 @@
   min-height: 150px;
 }
 
-
-
   </style>
+
+<style>
+  /* Canvas overlay for 3D preview */
+  #preview3d-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+  #preview3d-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 101;
+    padding: 0.5rem 1rem;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+</style>
+
+
+
 </head>
 <body>
     <h1>🧪 Structify</h1>
@@ -279,7 +304,7 @@
       <p id="inspector-text" style="font-size: 0.95rem;">Click on a residue to learn about it!</p>
     </div>
     <div id="toast">Nice Fold!</div>
-  
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js"></script>
     <script>
       function saveGameState() {}
@@ -804,6 +829,76 @@ function updateLiveDeltaG() {
 }
 
     </script>
+
+<!-- 3D Preview Toggle Button -->
+<button id="preview3d-toggle" class="lab-button">🎥 Open 3D Preview</button>
+
+<script>
+  window.addEventListener('DOMContentLoaded', () => {
+    let preview3dWindow = null;
+    const toggle = document.getElementById('preview3d-toggle');
+    if (!toggle) return;
+    toggle.addEventListener('click', () => {
+      // Open or focus the preview window
+      if (!preview3dWindow || preview3dWindow.closed) {
+        preview3dWindow = window.open('', 'Structify 3D Preview', 'width=600,height=600');
+        const previewHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>3D Preview</title>
+  <style>body{margin:0;overflow:hidden;}canvas{display:block;}</style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+  <script>
+    // grab placed residues from opener
+    const drops = window.opener.document.querySelectorAll('.drop-zone .dropped');
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 1, 2000);
+    camera.position.set(0, 0, 500);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    scene.add(new THREE.AmbientLight(0xffffff, 1));
+    const colorMap = { hydrophobic: 0x6d4c41, polar: 0x42a5f5, acidic: 0xef5350, basic: 0x66bb6a, disulfide: 0xff9800 };
+    drops.forEach(el => {
+      const geom = new THREE.SphereGeometry(15, 16, 16);
+      const mat = new THREE.MeshStandardMaterial({ color: colorMap[el.dataset.type] || 0x888888 });
+      const sphere = new THREE.Mesh(geom, mat);
+      const rect = el.parentElement.getBoundingClientRect();
+      const x = el.offsetLeft + el.offsetWidth/2 - rect.width/2;
+      const y = -(el.offsetTop + el.offsetHeight/2 - rect.height/2);
+      // depth: hydrophobic near core, others peripheral
+      let z = (Math.random() - 0.5) * (el.dataset.type === 'hydrophobic' ? 50 : 250);
+      sphere.position.set(x, y, z);
+      scene.add(sphere);
+    });
+    (function animate(){
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    })();
+  <\/script>
+</body>
+</html>`;
+        preview3dWindow.document.open();
+        preview3dWindow.document.write(previewHtml);
+        preview3dWindow.document.close();
+      } else {
+        preview3dWindow.focus();
+      }
+    });
+  });
+</script>
+
+
+
+
+
   </body>
   
   
