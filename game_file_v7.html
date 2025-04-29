@@ -397,6 +397,7 @@ function updateInspector(name) {
   
       window.onload = () => {
         generateResidues("daily-" + new Date().toISOString().split('T')[0]);
+        updateLiveDeltaG();
         
       }
       window.runDemo = runDemo;
@@ -438,6 +439,7 @@ function runDemo() {
     el.style.top = p.y + 'px';
     el.classList.add('dropped');
     dropZone.appendChild(el);
+    updateLiveDeltaG();
     i++;
     setTimeout(dropNext, 120);
   }
