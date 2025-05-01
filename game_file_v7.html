@@ -181,7 +181,6 @@
   flex-wrap: wrap;
 }
 
-
 #bank-inspector-wrapper {
   display: flex;
   justify-content: center;
@@ -198,9 +197,7 @@
 }
 
   </style>
-
 <style>
-  /* Canvas overlay for 3D preview */
   #preview3d-container {
     position: absolute;
     top: 0;
@@ -223,12 +220,9 @@
   }
 </style>
 
-
-
 </head>
 <body>
     <h1>🧪 Structify</h1>
-  
     <div id="demo">
       <div class="highlight-box">
         <strong>🧬 Tutorial:</strong>
@@ -245,7 +239,6 @@
         <button onclick="runDemo()">▶️ Watch a Perfect Structure</button>
       </div>
     </div>
-  
 
     <div class="highlight-box">
       <strong>🔬 Learn About Folding:</strong>
@@ -263,7 +256,6 @@
       <div class="bar" id="score-bar"></div>
     </div>
     
-
     <div id="bank-inspector-wrapper" style="display: flex; justify-content: center; align-items: flex-start; gap: 20px; flex-wrap: wrap; margin: 1rem auto; max-width: 900px;">
       <div class="game-container" id="aa-bank"></div>
     
@@ -362,7 +354,6 @@
   Val: { full: "Valine", polarity: "Nonpolar", charge: "Neutral" }
 };
 
-
 function createAA(name, i, fromBank = true) { 
   const el = document.createElement('div');
   el.className = `amino-acid ${types[name]}`;
@@ -385,7 +376,6 @@ function createAA(name, i, fromBank = true) {
   return el;
 }
 
-
 function updateInspector(name) {
   const info = aminoAcidInfo[name];
   if (!info) return;
@@ -400,10 +390,6 @@ function updateInspector(name) {
     Charge at pH 7: ${info.charge}
   `;
 }
-
-
-
-
     dropZone.addEventListener('dragover',e=>e.preventDefault());
     dropZone.addEventListener('drop',e=>{e.preventDefault();const id=e.dataTransfer.getData('text');const el=document.getElementById(id);
       el.classList.add('dropped');el.style.position='absolute';const r=dropZone.getBoundingClientRect();
@@ -419,7 +405,6 @@ function updateInspector(name) {
         setTimeout(() => toast.className = toast.className.replace("show", ""), 3000);
       }
   
-  
       window.onload = () => {
         generateResidues("daily-" + new Date().toISOString().split('T')[0]);
         updateLiveDeltaG();
@@ -432,7 +417,6 @@ function updateInspector(name) {
   const todaySeed = "daily-" + new Date().toISOString().split('T')[0];
   generateResidues(todaySeed);
 }
-
 
 function runDemo() {
   resetGame();
@@ -456,8 +440,8 @@ function runDemo() {
   {name:'His',x:380,y:200},
   {name:'Arg',x:380,y:120},
   {name:'Lys',x:120,y:180},
-  {name:'Cys',x:220,y:120}, // 🧪 Cys 1 - moved near center
-  {name:'Cys',x:260,y:120}  // 🧪 Cys 2 - placed very close to Cys 1 (40px apart horizontally)
+  {name:'Cys',x:220,y:120},
+  {name:'Cys',x:260,y:120}  
 ];
 
 
@@ -486,10 +470,6 @@ function runDemo() {
 
   dropNext();
 }
-
-
-
-
 
 function copyReportToClipboard() {
         const text = document.getElementById('score-report').innerText;
@@ -534,8 +514,6 @@ function copyReportToClipboard() {
   aaBank.innerHTML = '';
   set.forEach((name, i) => aaBank.appendChild(createAA(name, i)));
 }
-
-  
       function assignDifficulty(set) {
   let hydroCount = 0;
   let polarCount = 0;
@@ -546,7 +524,6 @@ function copyReportToClipboard() {
     if (type === "polar") polarCount++;
   });
 
-  // Now assign difficulty
   if (hydroCount >= 8) {
     return "Easy 🌱";
   } else if (hydroCount >= 5) {
@@ -555,7 +532,6 @@ function copyReportToClipboard() {
     return "Hard 🌵";
   }
 }
-
       function resetGame() {
   localStorage.removeItem('foldGameState');
   [...document.querySelectorAll('.dropped')].forEach(el => {
@@ -573,8 +549,6 @@ function copyReportToClipboard() {
   document.getElementById('live-deltaG').textContent = "ΔG: — kcal/mol";
 
 }
-
-  
       function checkStructure() {
         const dropped = [...document.querySelectorAll('.drop-zone .dropped')];
         const rect = dropZone.getBoundingClientRect();
@@ -612,8 +586,6 @@ function copyReportToClipboard() {
       y: el.offsetTop  + el.offsetHeight/2
     };
   }
-
-
 
   hydros.forEach(h => {
     const c = elemCenter(h);
@@ -678,7 +650,6 @@ if (deltaG < -15) {
 }
 
 report.innerHTML += `<p style="font-size:0.95rem; color:#333;">📝 <strong>Analysis:</strong> ${finalNote}</p>`;
-
     const facts = [
   "Proteins fold within milliseconds — much faster than random chance predicts (Levinthal's paradox)!",
   "Disulfide bonds between cysteines stabilize proteins like insulin and antibodies.",
@@ -704,9 +675,6 @@ report.innerHTML += `<p style="font-size:0.95rem; color:#333;">📝 <strong>Anal
 
 const randomFact = facts[Math.floor(Math.random() * facts.length)];
 report.innerHTML += `<p style="font-size:0.9rem; color:#555;">💡 <strong>Did you know?</strong> ${randomFact}</p>`;
-
-
-    
         showToast(deltaG < -6 ? "✨ Nice Fold!" : "🤏 Could be tighter...");
       }
   
@@ -754,8 +722,6 @@ if (score > 40) {
 } else {
   qualityLabel = 'Poor Core Packing';
 }
-
-
   return {
     coreScore: score,
     hydroAvg: hydroAvgDist,
@@ -764,7 +730,6 @@ if (score > 40) {
     message: `🧩 Core Packing Score: ${score.toFixed(1)}\nHydrophobic avg dist: ${hydroAvgDist.toFixed(1)}px\nPolar avg dist: ${polarAvgDist.toFixed(1)}px\n🏅 Core Rating: ${stars}`
   };
 }
-
 
 function calculateCurrentDeltaG() {
   const dropped = [...document.querySelectorAll('.drop-zone .dropped')];
@@ -824,8 +789,6 @@ function calculateCurrentDeltaG() {
   const deltaG = -2 * hydros.length + polars.length - 3 * saltBridges - 4 * disulfideBonds - 1 * shellBonus;
   return deltaG;
 }
-
-
 
 function updateLiveDeltaG() {
   const deltaG = calculateCurrentDeltaG();
@@ -930,10 +893,5 @@ drops.forEach(el => {
   });
 </script>
 
-
-
-
   </body>
-  
-  
 </html>
