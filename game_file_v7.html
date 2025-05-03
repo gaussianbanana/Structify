@@ -44,11 +44,11 @@ h1 {
   background: var(--color-surface);
   border-left: 4px solid var(--color-primary);
   box-shadow: var(--shadow);
-  padding: 1rem;
+  padding: 2rem;
   border-radius: var(--radius);
   width: 100%;
   max-width: 800px;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
   text-align: left;
 }
 
@@ -174,7 +174,7 @@ input[type="text"] {
   box-shadow: var(--shadow);
   border-radius: var(--radius);
   padding: 1rem;
-  width: 250px;
+  width: 500px;
   min-height: 150px;
   margin: 0 auto 1.5rem;
   text-align: left;
@@ -226,33 +226,40 @@ input[type="text"] {
     <h3>An Amino Acid Placement Video Game</h3>
     <div id="demo">
       <div class="highlight-box">
-        <strong>🧬 Tutorial:</strong>
-        <p> Your aim is to build a small peptide structure by placing all 18 amino acids into the fold zone (grey box) with the following considerations to build the best possible protein structure: </p>
-        <ul style="text-align:left; font-size: 0.95rem">
-          <li><strong>Salt bridges</strong>: Place acidic + basic residues close together (but don’t block them with hydrophobic residues).</li>
-          <li><strong>Disulfide bonds</strong>: Place two <code>Cys</code> near each other.</li>
-          <li><strong>Hydrophobic residues</strong> are found in brown</li>
-          <li><strong>Polar residues</strong> are found in blue</li>
-          <li><strong>Acid and Basic</strong> are found in green and red respectively</li>
-          <li><strong>WASD</strong>: Use these keys to nudge residues on the board.</li>
-          <li><strong>Score</strong>: Lower ΔG (Gibbs free energy) denotes a better fold. Press "Check My Fold" to see your lab report.</li>
-        </ul>
-        <button onclick="runDemo()">▶️ Watch a Perfect Structure</button>
+        <strong>🧬 How to Play</strong>
+        <ol style="text-align:left; font-size:0.95rem; margin-top:0.5rem;">
+          <li>Drag each amino acid from the bank into the grey fold zone.</li>
+          <li>Form at least one <strong>salt bridge</strong> by placing an acidic (–) residue within range of a basic (+) residue.</li>
+          <li>Create <strong>disulfide bonds</strong> by bringing two Cys residues close together.</li>
+          <li>Pack <strong>hydrophobic</strong> residues toward the center (core).</li>
+          <li>Keep <strong>polar</strong> residues on the surface (shell).</li>
+        </ol>
+        <p style="text-align:left; font-size:0.95rem;">
+          Use <kbd>W</kbd>/<kbd>A</kbd>/<kbd>S</kbd>/<kbd>D</kbd> to nudge a selected residue one grid step at a time.  
+          When you’re happy with your arrangement, click <strong>Check My Fold</strong> to generate your lab report and ΔG score.
+        </p>
       </div>
-    </div>
-
-    <div class="highlight-box">
-      <strong>🔬 Learn About Folding:</strong>
-      <ul style="text-align:left; font-size: 0.95rem">
-        <li><strong>Salt Bridges:</strong> Electrostatic attractions between acidic (–) and basic (+) side chains. Important for structural stability!</li>
-        <li><strong>Disulfide Bonds:</strong> Covalent bonds between two cysteine residues. They stabilize the folded shape of proteins, especially outside the cell.</li>
-        <li><strong>Hydrophobic Effect:</strong> Hydrophobic side chains cluster together inside the protein to avoid water, driving folding!</li>
-        <li><strong>Polar Residues:</strong> Prefer to stay on the surface of the protein where they can interact with water molecules.</li>
-        <li><strong>Gibbs Free Energy (ΔG):</strong> Proteins fold to minimize ΔG — lower values = more stable structures.</li>
-      </ul>
-    </div>
+      
+      <div class="highlight-box">
+        <strong>🔬 What You’ll Learn</strong>
+        <ul style="text-align:left; font-size:0.95rem; margin-top:0.5rem;">
+          <li><strong>Gibbs Free Energy (ΔG):</strong> How side‑chain interactions shape overall stability.</li>
+          <li><strong>Salt Bridges:</strong> Electrostatic attractions between oppositely charged residues.</li>
+          <li><strong>Disulfide Bonds:</strong> Covalent cross‑links that lock in fold geometry.</li>
+          <li><strong>Hydrophobic Effect:</strong> Why nonpolar side chains drive into the core away from water.</li>
+          <li><strong>Polar Surface:</strong> How polar residues favor solvent exposure.</li>
+        </ul>
+        <p style="text-align:left; font-size:0.95rem;">
+          You’ll get instant feedback on your fold quality, core packing, and real‑time ΔG so you can experiment and learn by iterating.
+        </p>
+      </div>
+      
     <div id="tutorial">
-      <p><strong>Goal:</strong> Optimize protein folding by arranging amino acids for best ΔG, salt bridges, and disulfide bonds!</p>
+      <h3>🎯 Objective</h3>
+<p style="max-width:800px; text-align:center; margin:0.5rem auto; font-size:0.95rem;">
+  Place all amino acids into the fold zone to simulate the most stable peptide. Lower ΔG=more stable=better score!
+</p>
+
       <p id="live-deltaG">ΔG: — kcal/mol</p>
       <div class="bar" id="score-bar"></div>
     </div>
@@ -260,7 +267,7 @@ input[type="text"] {
     <div id="bank-inspector-wrapper" style="display: flex; justify-content: center; align-items: flex-start; gap: 20px; flex-wrap: wrap; margin: 1rem auto; max-width: 900px;">
       <div class="game-container" id="aa-bank"></div>
     
-      <div id="inspector" class="highlight-box" style="display:none; width: 250px; min-height: 150px;">
+      <div id="inspector" class="highlight-box" style="display:none; width: 400px; min-height: 150px;">
         <strong>🔬 Residue Inspector:</strong>
         <p id="inspector-text" style="font-size: 0.95rem;">Click on a residue to learn about it!</p>
       </div>
@@ -333,27 +340,128 @@ input[type="text"] {
 
       });
       const aminoAcidInfo = {
-  Ala: { full: "Alanine", polarity: "Nonpolar", charge: "Neutral" },
-  Arg: { full: "Arginine", polarity: "Polar", charge: "Positive" },
-  Asn: { full: "Asparagine", polarity: "Polar", charge: "Neutral" },
-  Asp: { full: "Aspartic Acid", polarity: "Polar", charge: "Negative" },
-  Cys: { full: "Cysteine", polarity: "Nonpolar", charge: "Neutral" },
-  Glu: { full: "Glutamic Acid", polarity: "Polar", charge: "Negative" },
-  Gln: { full: "Glutamine", polarity: "Polar", charge: "Neutral" },
-  Gly: { full: "Glycine", polarity: "Nonpolar", charge: "Neutral" },
-  His: { full: "Histidine", polarity: "Polar", charge: "Positive" },
-  Ile: { full: "Isoleucine", polarity: "Nonpolar", charge: "Neutral" },
-  Leu: { full: "Leucine", polarity: "Nonpolar", charge: "Neutral" },
-  Lys: { full: "Lysine", polarity: "Polar", charge: "Positive" },
-  Met: { full: "Methionine", polarity: "Nonpolar", charge: "Neutral" },
-  Phe: { full: "Phenylalanine", polarity: "Nonpolar", charge: "Neutral" },
-  Pro: { full: "Proline", polarity: "Nonpolar", charge: "Neutral" },
-  Ser: { full: "Serine", polarity: "Polar", charge: "Neutral" },
-  Thr: { full: "Threonine", polarity: "Polar", charge: "Neutral" },
-  Trp: { full: "Tryptophan", polarity: "Nonpolar", charge: "Neutral" },
-  Tyr: { full: "Tyrosine", polarity: "Polar", charge: "Neutral" },
-  Val: { full: "Valine", polarity: "Nonpolar", charge: "Neutral" }
+  Ala: { 
+    full: "Alanine", 
+    polarity: "Nonpolar", 
+    charge: "Neutral", 
+    fact: "Small and helix‑promoting; often found in α‑helices." 
+  },
+  Arg: { 
+    full: "Arginine", 
+    polarity: "Polar", 
+    charge: "Positive", 
+    fact: "Guanidinium side chain forms strong salt bridges and H‑bonds." 
+  },
+  Asn: { 
+    full: "Asparagine", 
+    polarity: "Polar", 
+    charge: "Neutral", 
+    fact: "Common in turns; its amide can form two H‑bonds." 
+  },
+  Asp: { 
+    full: "Aspartic Acid", 
+    polarity: "Polar", 
+    charge: "Negative", 
+    fact: "Often acts as a proton donor/acceptor in enzyme active sites." 
+  },
+  Cys: { 
+    full: "Cysteine", 
+    polarity: "Nonpolar", 
+    charge: "Neutral", 
+    fact: "Can form disulfide bonds, stabilizing extracellular proteins." 
+  },
+  Glu: { 
+    full: "Glutamic Acid", 
+    polarity: "Polar", 
+    charge: "Negative", 
+    fact: "Longer side chain than Asp—common in salt‑bridge networks." 
+  },
+  Gln: { 
+    full: "Glutamine", 
+    polarity: "Polar", 
+    charge: "Neutral", 
+    fact: "Helix‑stabilizing amide; frequently on protein surfaces." 
+  },
+  Gly: { 
+    full: "Glycine", 
+    polarity: "Nonpolar", 
+    charge: "Neutral", 
+    fact: "Smallest AA—highly flexible, found in tight turns and loops." 
+  },
+  His: { 
+    full: "Histidine", 
+    polarity: "Polar", 
+    charge: "Positive", 
+    fact: "pKa≈6; toggles charge near physiological pH, often in active sites." 
+  },
+  Ile: { 
+    full: "Isoleucine", 
+    polarity: "Nonpolar", 
+    charge: "Neutral", 
+    fact: "Hydrophobic bulky side chain—common in protein cores." 
+  },
+  Leu: { 
+    full: "Leucine", 
+    polarity: "Nonpolar", 
+    charge: "Neutral", 
+    fact: "Helix‑stabilizing and core‑packing AA; leucine zipper motif." 
+  },
+  Lys: { 
+    full: "Lysine", 
+    polarity: "Polar", 
+    charge: "Positive", 
+    fact: "Frequently on surfaces; target for acetylation and ubiquitination." 
+  },
+  Met: { 
+    full: "Methionine", 
+    polarity: "Nonpolar", 
+    charge: "Neutral", 
+    fact: "Start codon; sulfur can coordinate metals and initiate helices." 
+  },
+  Phe: { 
+    full: "Phenylalanine", 
+    polarity: "Nonpolar", 
+    charge: "Neutral", 
+    fact: "Aromatic ring engages in π–π stacking in protein cores." 
+  },
+  Pro: { 
+    full: "Proline", 
+    polarity: "Nonpolar", 
+    charge: "Neutral", 
+    fact: "Cyclic side chain induces kinks—common in loops and turns." 
+  },
+  Ser: { 
+    full: "Serine", 
+    polarity: "Polar", 
+    charge: "Neutral", 
+    fact: "Hydroxyl can be phosphorylated; often in enzyme active sites." 
+  },
+  Thr: { 
+    full: "Threonine", 
+    polarity: "Polar", 
+    charge: "Neutral", 
+    fact: "β‑branched and can be phosphorylated, adding regulation sites." 
+  },
+  Trp: { 
+    full: "Tryptophan", 
+    polarity: "Nonpolar", 
+    charge: "Neutral", 
+    fact: "Largest AA; its indole ring often at protein–ligand interfaces." 
+  },
+  Tyr: { 
+    full: "Tyrosine", 
+    polarity: "Polar", 
+    charge: "Neutral", 
+    fact: "Aromatic and phosphorylatable—key in signaling cascades." 
+  },
+  Val: { 
+    full: "Valine", 
+    polarity: "Nonpolar", 
+    charge: "Neutral", 
+    fact: "β‑branched; common in β‑sheets and hydrophobic cores." 
+  }
 };
+
 
 function createAA(name, i, fromBank = true) { 
   const el = document.createElement('div');
@@ -383,12 +491,13 @@ function updateInspector(name) {
 
   const inspector = document.getElementById('inspector');
   const inspectorText = document.getElementById('inspector-text');
-  
+
   inspector.style.display = 'block';
   inspectorText.innerHTML = `
     <strong>${name} – ${info.full}</strong><br>
     Polarity: ${info.polarity}<br>
-    Charge at pH 7: ${info.charge}
+    Charge at pH 7: ${info.charge}<br>
+    ${info.fact ? `<em>💡 Fun fact:</em> ${info.fact}` : ""}
   `;
 }
     dropZone.addEventListener('dragover',e=>e.preventDefault());
